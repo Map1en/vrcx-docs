@@ -1,0 +1,157 @@
+import { defineConfig } from 'vitepress';
+import { withMermaid } from 'vitepress-plugin-mermaid';
+
+export default withMermaid(
+    defineConfig({
+        title: 'VRCX Internal Docs',
+        description: 'Architecture, decision framework & module deep-dives for VRCX frontend',
+
+        locales: {
+            en: {
+                label: 'English',
+                lang: 'en',
+                link: '/en/',
+                themeConfig: {
+                    nav: [
+                        { text: 'Architecture', link: '/en/architecture/overview' },
+                        { text: 'Decision', link: '/en/decision/feature-matrix' },
+                        { text: 'Modules', link: '/en/modules/friend-system' },
+                    ],
+                    sidebar: {
+                        '/en/': [
+                            {
+                                text: 'Architecture',
+                                items: [
+                                    {
+                                        text: 'System Overview',
+                                        link: '/en/architecture/overview',
+                                    },
+                                    {
+                                        text: 'Data Flow',
+                                        link: '/en/architecture/data-flow',
+                                    },
+                                    {
+                                        text: 'Module Dependencies',
+                                        link: '/en/architecture/dependencies',
+                                    },
+                                ],
+                            },
+                            {
+                                text: 'Decision Framework',
+                                items: [
+                                    {
+                                        text: 'Feature Matrix',
+                                        link: '/en/decision/feature-matrix',
+                                    },
+                                    {
+                                        text: 'Layout Strategy',
+                                        link: '/en/decision/layout-strategy',
+                                    },
+                                    {
+                                        text: 'Impact Analysis Template',
+                                        link: '/en/decision/impact-template',
+                                    },
+                                ],
+                            },
+                            {
+                                text: 'Module Deep-Dives',
+                                items: [
+                                    {
+                                        text: 'Friend System',
+                                        link: '/en/modules/friend-system',
+                                    },
+                                    {
+                                        text: 'Favorite System',
+                                        link: '/en/modules/favorite-system',
+                                    },
+                                    {
+                                        text: 'Instance & Location',
+                                        link: '/en/modules/instance-location',
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                },
+            },
+            zh: {
+                label: '中文',
+                lang: 'zh-CN',
+                link: '/zh/',
+                themeConfig: {
+                    nav: [
+                        { text: '架构', link: '/zh/architecture/overview' },
+                        { text: '决策', link: '/zh/decision/feature-matrix' },
+                        { text: '模块', link: '/zh/modules/friend-system' },
+                    ],
+                    sidebar: {
+                        '/zh/': [
+                            {
+                                text: '架构',
+                                items: [
+                                    {
+                                        text: '系统总览',
+                                        link: '/zh/architecture/overview',
+                                    },
+                                    {
+                                        text: '数据流',
+                                        link: '/zh/architecture/data-flow',
+                                    },
+                                    {
+                                        text: '模块依赖',
+                                        link: '/zh/architecture/dependencies',
+                                    },
+                                ],
+                            },
+                            {
+                                text: '决策框架',
+                                items: [
+                                    {
+                                        text: '功能矩阵',
+                                        link: '/zh/decision/feature-matrix',
+                                    },
+                                    {
+                                        text: '布局策略',
+                                        link: '/zh/decision/layout-strategy',
+                                    },
+                                    {
+                                        text: '影响分析模板',
+                                        link: '/zh/decision/impact-template',
+                                    },
+                                ],
+                            },
+                            {
+                                text: '模块详解',
+                                items: [
+                                    {
+                                        text: 'Friend 系统',
+                                        link: '/zh/modules/friend-system',
+                                    },
+                                    {
+                                        text: 'Favorite 系统',
+                                        link: '/zh/modules/favorite-system',
+                                    },
+                                    {
+                                        text: 'Instance & Location',
+                                        link: '/zh/modules/instance-location',
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                },
+            },
+        },
+
+        themeConfig: {
+            search: {
+                provider: 'local',
+            },
+            socialLinks: [
+                { icon: 'github', link: 'https://github.com/vrcx-team/VRCX' },
+            ],
+        },
+
+        mermaid: {},
+    })
+);
