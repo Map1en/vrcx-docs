@@ -1,10 +1,21 @@
 import { defineConfig } from 'vitepress';
 import { withMermaid } from 'vitepress-plugin-mermaid';
 
+const repository = process.env.GITHUB_REPOSITORY ?? '';
+const repoName = repository.split('/')[1] ?? '';
+const isUserOrOrgSite = repoName.endsWith('.github.io');
+const base =
+    process.env.GITHUB_ACTIONS === 'true'
+        ? isUserOrOrgSite
+            ? '/'
+            : `/${repoName}/`
+        : '/';
+
 export default withMermaid(
     defineConfig({
         title: 'VRCX Internal Docs',
         description: 'Architecture, decision framework & module deep-dives for VRCX frontend',
+        base,
 
         locales: {
             en: {
