@@ -20,7 +20,6 @@ graph LR
     instance --> user
     moderation --> user
     notification --> user
-    photon --> user
     search --> user
     sharedFeed --> user
     ui --> user
@@ -39,7 +38,6 @@ graph LR
     %% Stores that depend on instance
     gameLog --> instance
     notification --> instance
-    photon --> instance
     sharedFeed --> instance
     ui --> instance
     vr --> instance
@@ -62,7 +60,6 @@ graph LR
     instance --> group
     instance --> location
     instance --> notification
-    instance --> photon
     instance --> sharedFeed
     instance --> world
 
@@ -72,7 +69,6 @@ graph LR
     vr --> game
     vr --> location
     vr --> notificationsSettings
-    vr --> photon
     vr --> sharedFeed
     vr --> wristOverlaySettings
 ```
@@ -84,9 +80,8 @@ graph LR
 | **user** | 13 stores depend on it | 🔴 Critical | Almost everything breaks — friend display, location, search, moderation, notifications, VR overlay |
 | **notification** | Imports 15 other stores | 🔴 Critical | Most complex store — touches favorites, game, groups, locations, moderation, settings. Changes here cascade everywhere |
 | **friend** | 7 stores depend on it | 🟠 High | Feed, game log, search, sidebar, VR overlay all read friend data |
-| **instance** | 6 stores depend on it | 🟡 Medium-High | Game log, notifications, photon networking, shared feed, VR all depend on instance state |
+| **instance** | 6 stores depend on it | 🟡 Medium-High | Game log, notifications, shared feed, VR all depend on instance state |
 | **sharedFeed** | 8 dependencies | 🟡 Medium-High | Aggregates friend, instance, location, notification data for display |
-| **photon** | 11 dependencies | 🟡 Medium-High | Real-time networking integrates with avatars, friends, game log, instances |
 | **location** | Leaf store | 🟢 Low | No cross-store dependencies — safe to modify in isolation |
 | **avatar** | Leaf store | 🟢 Low | No cross-store dependencies |
 | **game** | Leaf store | 🟢 Low | No cross-store dependencies |
@@ -100,7 +95,7 @@ Use this table before modifying any coordinator — it tells you exactly which s
 |-------------|------------|
 | **authCoordinator** | auth, notification, updateLoop, user |
 | **authAutoLoginCoordinator** | advancedSettings, auth |
-| **userCoordinator** | appearanceSettings, auth, avatar, favorite, friend, game, generalSettings, instance, location, moderation, notification, photon, search, sharedFeed, ui, user |
+| **userCoordinator** | appearanceSettings, auth, avatar, favorite, friend, game, generalSettings, instance, location, moderation, notification, search, sharedFeed, ui, user |
 | **userEventCoordinator** | feed, friend, generalSettings, group, instance, notification, sharedFeed, user, world |
 | **userSessionCoordinator** | auth, game, instance, user |
 | **friendSyncCoordinator** | auth, friend, updateLoop, user |
@@ -115,8 +110,8 @@ Use this table before modifying any coordinator — it tells you exactly which s
 | **moderationCoordinator** | avatar, moderation |
 | **memoCoordinator** | friend, user |
 | **gameCoordinator** | advancedSettings, avatar, gameLog, game, instance, launch, location, modal, notification, updateLoop, user, vr, world |
-| **gameLogCoordinator** | advancedSettings, friend, gallery, gameLog, generalSettings, instance, location, modal, notification, photon, sharedFeed, user, vr, vrcx |
-| **locationCoordinator** | advancedSettings, gameLog, game, instance, location, notification, photon, user, vr |
+| **gameLogCoordinator** | advancedSettings, friend, gallery, gameLog, generalSettings, instance, location, modal, notification, sharedFeed, user, vr, vrcx |
+| **locationCoordinator** | advancedSettings, gameLog, game, instance, location, notification, user, vr |
 | **cacheCoordinator** | auth, avatar, instance, world |
 | **imageUploadCoordinator** | (minimal — API calls only) |
 | **dateCoordinator** | (pure utility — no stores) |

@@ -20,7 +20,6 @@ graph LR
     instance --> user
     moderation --> user
     notification --> user
-    photon --> user
     search --> user
     sharedFeed --> user
     ui --> user
@@ -39,7 +38,6 @@ graph LR
     %% 依赖 instance 的 store
     gameLog --> instance
     notification --> instance
-    photon --> instance
     sharedFeed --> instance
     ui --> instance
     vr --> instance
@@ -62,7 +60,6 @@ graph LR
     instance --> group
     instance --> location
     instance --> notification
-    instance --> photon
     instance --> sharedFeed
     instance --> world
 
@@ -72,7 +69,6 @@ graph LR
     vr --> game
     vr --> location
     vr --> notificationsSettings
-    vr --> photon
     vr --> sharedFeed
     vr --> wristOverlaySettings
 ```
@@ -84,9 +80,8 @@ graph LR
 | **user** | 13 个 store 依赖 | 🔴 极高 | 几乎所有东西都会崩——好友显示、位置、搜索、管理、通知、VR 覆盖层 |
 | **notification** | 导入 15 个其他 store | 🔴 极高 | 最复杂的 store——涉及收藏、游戏、群组、位置、管理、设置。改动会级联到各处 |
 | **friend** | 7 个 store 依赖 | 🟠 高 | Feed、游戏日志、搜索、侧边栏、VR 覆盖层都读取好友数据 |
-| **instance** | 6 个 store 依赖 | 🟡 中高 | 游戏日志、通知、photon 网络、共享 feed、VR 都依赖实例状态 |
+| **instance** | 6 个 store 依赖 | 🟡 中高 | 游戏日志、通知、共享 feed、VR 都依赖实例状态 |
 | **sharedFeed** | 8 个依赖 | 🟡 中高 | 聚合好友、实例、位置、通知数据用于展示 |
-| **photon** | 11 个依赖 | 🟡 中高 | 实时网络与模型、好友、游戏日志、实例集成 |
 | **location** | 叶子 store | 🟢 低 | 无跨 store 依赖——可安全独立修改 |
 | **avatar** | 叶子 store | 🟢 低 | 无跨 store 依赖 |
 | **game** | 叶子 store | 🟢 低 | 无跨 store 依赖 |
@@ -100,7 +95,7 @@ graph LR
 |-------------|-------------|
 | **authCoordinator** | auth, notification, updateLoop, user |
 | **authAutoLoginCoordinator** | advancedSettings, auth |
-| **userCoordinator** | appearanceSettings, auth, avatar, favorite, friend, game, generalSettings, instance, location, moderation, notification, photon, search, sharedFeed, ui, user |
+| **userCoordinator** | appearanceSettings, auth, avatar, favorite, friend, game, generalSettings, instance, location, moderation, notification, search, sharedFeed, ui, user |
 | **userEventCoordinator** | feed, friend, generalSettings, group, instance, notification, sharedFeed, user, world |
 | **userSessionCoordinator** | auth, game, instance, user |
 | **friendSyncCoordinator** | auth, friend, updateLoop, user |
@@ -115,8 +110,8 @@ graph LR
 | **moderationCoordinator** | avatar, moderation |
 | **memoCoordinator** | friend, user |
 | **gameCoordinator** | advancedSettings, avatar, gameLog, game, instance, launch, location, modal, notification, updateLoop, user, vr, world |
-| **gameLogCoordinator** | advancedSettings, friend, gallery, gameLog, generalSettings, instance, location, modal, notification, photon, sharedFeed, user, vr, vrcx |
-| **locationCoordinator** | advancedSettings, gameLog, game, instance, location, notification, photon, user, vr |
+| **gameLogCoordinator** | advancedSettings, friend, gallery, gameLog, generalSettings, instance, location, modal, notification, sharedFeed, user, vr, vrcx |
+| **locationCoordinator** | advancedSettings, gameLog, game, instance, location, notification, user, vr |
 | **cacheCoordinator** | auth, avatar, instance, world |
 | **imageUploadCoordinator** | （最小化——仅 API 调用） |
 | **dateCoordinator** | （纯工具——无 store） |

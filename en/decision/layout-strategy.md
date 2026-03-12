@@ -5,9 +5,9 @@
 ```mermaid
 graph LR
     subgraph Window["Application Window"]
-        Nav["NavMenu<br/>48px collapsed<br/>~200px expanded"]
-        Main["Main Content<br/>default 75%<br/>RouterView + KeepAlive"]
-        Side["Right Sidebar<br/>default 25%<br/>min 12% / max 700px<br/>collapsible to 0"]
+        Nav["NavMenu"]
+        Main["Main Content"]
+        Side["Right Sidebar"]
     end
     Nav --- Main --- Side
 ```

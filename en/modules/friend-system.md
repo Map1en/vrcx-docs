@@ -6,29 +6,29 @@ The Friend system is the most complex subsystem in VRCX, spanning 1 store, 3 coo
 
 ```mermaid
 graph TD
-    subgraph Store["friendStore"]
-        friends["friends Map<br/>ID → FriendContext"]
-        friendLog["friendLog Map"]
-        computed["Computed:<br/>allFavoriteOnlineFriends<br/>onlineFriends<br/>activeFriends<br/>offlineFriends<br/>friendsInSameInstance"]
+    subgraph External
+        ws["WebSocket Events"]
+        api["VRChat API"]
+        db["SQLite DB"]
     end
 
     subgraph Coordinators
-        sync["friendSyncCoordinator<br/>• runInitFriendsListFlow()<br/>• runRefreshFriendsListFlow()"]
-        presence["friendPresenceCoordinator<br/>• runUpdateFriendFlow()<br/>• 170s pending offline<br/>• pendingOfflineWorker"]
-        relationship["friendRelationshipCoordinator<br/>• addFriendship()<br/>• runDeleteFriendshipFlow()<br/>• updateFriendship()"]
+        relationship["friendRelationshipCoordinator"]
+        presence["friendPresenceCoordinator"]
+        sync["friendSyncCoordinator"]
+    end
+
+    subgraph Store["friendStore"]
+        friends["friends Map"]
+        friendLog["friendLog Map"]
+        computed["Computed Properties"]
     end
 
     subgraph Views
-        sidebar["Sidebar<br/>Quick friend list<br/>VIP / Online / Active / Offline"]
-        locations["FriendsLocations<br/>Card-based view<br/>Virtual scrolling"]
-        list["FriendList<br/>Data table<br/>Search + bulk ops"]
-        log["FriendLog<br/>History table<br/>Add/remove/rename events"]
-    end
-
-    subgraph External
-        ws["WebSocket Events<br/>friend-online/offline/active<br/>friend-location/update<br/>friend-add/delete"]
-        api["VRChat API<br/>GET /friends<br/>GET /users/{id}"]
-        db["SQLite DB<br/>friendLog table<br/>user stats"]
+        sidebar["Sidebar"]
+        locations["FriendsLocations"]
+        list["FriendList"]
+        log["FriendLog"]
     end
 
     ws --> presence
@@ -43,6 +43,21 @@ graph TD
     presence --> db
     sync --> db
 ```
+
+| Component | Details |
+|-----------|--------|
+| **WebSocket Events** | friend-online/offline/active, friend-location/update, friend-add/delete |
+| **VRChat API** | GET /friends, GET /users/{id} |
+| **SQLite DB** | friendLog table, user stats |
+| **friendRelationshipCoordinator** | addFriendship(), runDeleteFriendshipFlow(), updateFriendship() |
+| **friendPresenceCoordinator** | runUpdateFriendFlow(), 170s pending offline, pendingOfflineWorker |
+| **friendSyncCoordinator** | runInitFriendsListFlow(), runRefreshFriendsListFlow() |
+| **friends Map** | ID → FriendContext |
+| **Computed Properties** | allFavoriteOnlineFriends, onlineFriends, activeFriends, offlineFriends, friendsInSameInstance |
+| **Sidebar** | Quick friend list (VIP / Online / Active / Offline) |
+| **FriendsLocations** | Card-based view + virtual scrolling |
+| **FriendList** | Data table, search + bulk ops |
+| **FriendLog** | History table, add/remove/rename events |
 
 ## FriendContext Data Structure
 

@@ -10,23 +10,23 @@ graph TD
     end
 
     subgraph Coordinator["favoriteCoordinator"]
-        ops["• addFavorite()<br/>• removeFavorite()<br/>• moveFavorite()<br/>• renameFavoriteGroup()"]
+        ops["addFavorite / removeFavorite<br/>moveFavorite / renameFavoriteGroup"]
     end
 
     subgraph API["api/favorite.js"]
-        endpoints["GET /favorites<br/>POST /favorites<br/>DELETE /favorites/{id}<br/>GET /favorites/groups"]
+        endpoints["CRUD + groups"]
     end
 
     subgraph Views["视图"]
-        favFriends["Favorites/Friends<br/>收藏好友分组"]
-        favWorlds["Favorites/Worlds<br/>收藏世界分组"]
-        favAvatars["Favorites/Avatars<br/>收藏模型分组"]
+        favFriends["收藏好友"]
+        favWorlds["收藏世界"]
+        favAvatars["收藏模型"]
     end
 
     subgraph Consumers["其他消费者"]
-        friendStore["friendStore<br/>allFavoriteFriendIds<br/>isVIP 标志"]
-        sidebar["Sidebar<br/>VIP 好友区域"]
-        locations["FriendsLocations<br/>收藏标签页"]
+        friendStore["friendStore"]
+        sidebar["Sidebar"]
+        locations["FriendsLocations"]
     end
 
     API --> Store

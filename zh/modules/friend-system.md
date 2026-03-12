@@ -6,29 +6,29 @@ Friend 系统是 VRCX 中最复杂的子系统，跨越 1 个 Store、3 个 Coor
 
 ```mermaid
 graph TD
-    subgraph Store["friendStore"]
-        friends["friends Map<br/>ID → FriendContext"]
-        friendLog["friendLog Map"]
-        computed["Computed:<br/>allFavoriteOnlineFriends<br/>onlineFriends<br/>activeFriends<br/>offlineFriends<br/>friendsInSameInstance"]
+    subgraph External["外部"]
+        ws["WebSocket 事件"]
+        api["VRChat API"]
+        db["SQLite DB"]
     end
 
     subgraph Coordinators
-        sync["friendSyncCoordinator<br/>• runInitFriendsListFlow()<br/>• runRefreshFriendsListFlow()"]
-        presence["friendPresenceCoordinator<br/>• runUpdateFriendFlow()<br/>• 170s 待离线机制<br/>• pendingOfflineWorker"]
-        relationship["friendRelationshipCoordinator<br/>• addFriendship()<br/>• runDeleteFriendshipFlow()<br/>• updateFriendship()"]
+        relationship["friendRelationshipCoordinator"]
+        presence["friendPresenceCoordinator"]
+        sync["friendSyncCoordinator"]
+    end
+
+    subgraph Store["friendStore"]
+        friends["friends Map"]
+        friendLog["friendLog Map"]
+        computed["Computed 属性"]
     end
 
     subgraph Views["视图"]
-        sidebar["Sidebar<br/>快速好友列表<br/>VIP / 在线 / 活跃 / 离线"]
-        locations["FriendsLocations<br/>卡片视图<br/>虚拟滚动"]
-        list["FriendList<br/>数据表<br/>搜索 + 批量操作"]
-        log["FriendLog<br/>历史表<br/>添加/删除/改名事件"]
-    end
-
-    subgraph External["外部"]
-        ws["WebSocket 事件<br/>friend-online/offline/active<br/>friend-location/update<br/>friend-add/delete"]
-        api["VRChat API<br/>GET /friends<br/>GET /users/{id}"]
-        db["SQLite DB<br/>friendLog 表<br/>用户统计"]
+        sidebar["Sidebar"]
+        locations["FriendsLocations"]
+        list["FriendList"]
+        log["FriendLog"]
     end
 
     ws --> presence
@@ -43,6 +43,21 @@ graph TD
     presence --> db
     sync --> db
 ```
+
+| 组件 | 职责 |
+|------|------|
+| **WebSocket 事件** | friend-online/offline/active, friend-location/update, friend-add/delete |
+| **VRChat API** | GET /friends, GET /users/{id} |
+| **SQLite DB** | friendLog 表、用户统计 |
+| **friendRelationshipCoordinator** | addFriendship(), runDeleteFriendshipFlow(), updateFriendship() |
+| **friendPresenceCoordinator** | runUpdateFriendFlow(), 170s 待离线机制, pendingOfflineWorker |
+| **friendSyncCoordinator** | runInitFriendsListFlow(), runRefreshFriendsListFlow() |
+| **friends Map** | ID → FriendContext |
+| **Computed 属性** | allFavoriteOnlineFriends, onlineFriends, activeFriends, offlineFriends, friendsInSameInstance |
+| **Sidebar** | 快速好友列表（VIP / 在线 / 活跃 / 离线） |
+| **FriendsLocations** | 卡片视图 + 虚拟滚动 |
+| **FriendList** | 数据表，搜索 + 批量操作 |
+| **FriendLog** | 历史表，添加/删除/改名事件 |
 
 ## FriendContext 数据结构
 

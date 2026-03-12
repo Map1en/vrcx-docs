@@ -24,7 +24,7 @@ graph TD
     end
 
     subgraph Layer4["Layer 4 — Components"]
-        Components["360+ Components<br/>UI Library (50+ types)<br/>Dialogs (20+)"]
+        Components["360+ Components"]
     end
 
     subgraph Layer3["Layer 3 — State Management"]
@@ -98,7 +98,7 @@ graph TD
 |----------|--------|
 | **Core Entity** | user, friend, avatar, world, instance, group, location |
 | **Features** | feed, favorite, search, gallery, invite, moderation |
-| **Real-time** | notification (complex), photon, vrcStatus |
+| **Real-time** | notification (complex), vrcStatus |
 | **Game** | game, gameLog (dir), launch |
 | **UI State** | ui, modal, globalSearch, sharedFeed, charts |
 | **Settings** | settings/general, appearance, advanced, notifications, discordPresence, wristOverlay |
@@ -128,9 +128,9 @@ graph TD
 ```mermaid
 graph LR
     subgraph MainLayout
-        Nav["NavMenu<br/>48px collapsed<br/>icon-based nav"]
-        Main["Main Content<br/>75% default<br/>RouterView + KeepAlive"]
-        Side["Sidebar<br/>25% default<br/>collapsible<br/>min 12% / max 700px"]
+        Nav["NavMenu"]
+        Main["Main Content"]
+        Side["Sidebar"]
     end
 
     Nav --- Main --- Side
@@ -140,7 +140,7 @@ graph LR
     end
 
     subgraph Portals["Dialog Portals"]
-        Dialogs["14 global dialogs<br/>MainDialogContainer<br/>FullscreenImagePreview<br/>LaunchDialog<br/>..."]
+        Dialogs["14 global dialogs"]
     end
 ```
 

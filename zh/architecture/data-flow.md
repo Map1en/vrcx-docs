@@ -6,16 +6,26 @@
 
 ```mermaid
 flowchart TD
-    A["用户操作 / WebSocket 事件 / UpdateLoop 定时器"] --> B["API 层<br/>src/api/*.js"]
-    B --> C["请求服务<br/>src/services/request.js<br/>• buildRequestInit()<br/>• deduplicateGETs()<br/>• parseResponse()"]
-    C --> D["WebApi 桥接<br/>src/services/webapi.js<br/>• Windows: WebApi.Execute(options)<br/>• Linux: WebApi.ExecuteJson(json)"]
-    D --> E["C# 后端<br/>HTTP 代理到 VRChat"]
+    A["用户操作 / WebSocket / UpdateLoop"] --> B["API 层"]
+    B --> C["请求服务"]
+    C --> D["WebApi 桥接"]
+    D --> E["C# 后端"]
     E --> F["VRChat API"]
     F --> E --> D --> C --> B
-    B --> G["Coordinator<br/>src/coordinators/*.js<br/>• apply*() 副作用<br/>• 跨 Store 编排"]
-    G --> H["Pinia Store<br/>src/stores/*.js<br/>• reactive Map/Set<br/>• computed 派生"]
-    H --> I["Vue 组件<br/>自动响应式更新"]
+    B --> G["Coordinator"]
+    G --> H["Pinia Store"]
+    H --> I["Vue 组件"]
 ```
+
+| 节点 | 路径 | 说明 |
+|------|------|------|
+| API 层 | src/api/*.js | — |
+| 请求服务 | src/services/request.js | buildRequestInit(), deduplicateGETs(), parseResponse() |
+| WebApi 桥接 | src/services/webapi.js | Windows: WebApi.Execute(options) / Linux: WebApi.ExecuteJson(json) |
+| C# 后端 | — | HTTP 代理到 VRChat |
+| Coordinator | src/coordinators/*.js | apply*() 副作用, 跨 Store 编排 |
+| Pinia Store | src/stores/*.js | reactive Map/Set, computed 派生 |
+| Vue 组件 | — | 自动响应式更新 |
 
 ## WebSocket 实时事件流
 
@@ -138,13 +148,13 @@ sequenceDiagram
 ```mermaid
 flowchart LR
     subgraph L1["第 1 层：Vue Query 缓存"]
-        QC["TanStack QueryClient<br/>• retry: 1<br/>• 不在 focus 时重新拉取<br/>• 基于新鲜度替换"]
+        QC["TanStack QueryClient"]
     end
     subgraph L2["第 2 层：实体缓存"]
-        EC["entityCache.js<br/>• 比较时间戳：<br/>  updated_at, last_activity,<br/>  last_login, $fetchedAt<br/>• 仅在更新时替换"]
+        EC["entityCache.js"]
     end
     subgraph L3["第 3 层：Store Map"]
-        SM["Pinia Store Map<br/>• reactive(new Map())<br/>• cachedUsers, friends,<br/>  cachedInstances<br/>• computed 派生"]
+        SM["Pinia Store Map"]
     end
 
     QC --> EC --> SM

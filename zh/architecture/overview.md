@@ -24,7 +24,7 @@ graph TD
     end
 
     subgraph Layer4["第 4 层 — 组件"]
-        Components["360+ 组件<br/>UI 组件库 (50+ 类型)<br/>弹窗 (20+)"]
+        Components["360+ 组件"]
     end
 
     subgraph Layer3["第 3 层 — 状态管理"]
@@ -98,7 +98,7 @@ graph TD
 |------|-------|
 | **核心实体** | user, friend, avatar, world, instance, group, location |
 | **功能** | feed, favorite, search, gallery, invite, moderation |
-| **实时** | notification（复杂）, photon, vrcStatus |
+| **实时** | notification（复杂）, vrcStatus |
 | **游戏** | game, gameLog (目录), launch |
 | **UI 状态** | ui, modal, globalSearch, sharedFeed, charts |
 | **设置** | settings/general, appearance, advanced, notifications, discordPresence, wristOverlay |
@@ -128,9 +128,9 @@ graph TD
 ```mermaid
 graph LR
     subgraph MainLayout["主布局"]
-        Nav["NavMenu<br/>48px 折叠<br/>图标导航"]
-        Main["主内容区<br/>默认 75%<br/>RouterView + KeepAlive"]
-        Side["Sidebar<br/>默认 25%<br/>可折叠<br/>最小 12% / 最大 700px"]
+        Nav["NavMenu"]
+        Main["主内容区"]
+        Side["Sidebar"]
     end
 
     Nav --- Main --- Side
@@ -140,7 +140,7 @@ graph LR
     end
 
     subgraph Portals["弹窗传送门"]
-        Dialogs["14 个全局弹窗<br/>MainDialogContainer<br/>FullscreenImagePreview<br/>LaunchDialog<br/>..."]
+        Dialogs["14 个全局弹窗"]
     end
 ```
 

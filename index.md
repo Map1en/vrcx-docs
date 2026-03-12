@@ -1,13 +1,6 @@
----
-layout: home
-hero:
-  name: VRCX Internal Docs
-  tagline: Choose your language / 选择语言
-  actions:
-    - theme: brand
-      text: English
-      link: /en/
-    - theme: alt
-      text: 中文
-      link: /zh/
----
+# VRCX Internal Docs
+
+Choose your language / 选择语言
+
+- [English](/en/)
+- [中文](/zh/)

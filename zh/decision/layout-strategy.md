@@ -5,9 +5,9 @@
 ```mermaid
 graph LR
     subgraph Window["应用窗口"]
-        Nav["NavMenu<br/>折叠 48px<br/>展开 ~200px"]
-        Main["主内容区<br/>默认 75%<br/>RouterView + KeepAlive"]
-        Side["右侧 Sidebar<br/>默认 25%<br/>最小 12% / 最大 700px<br/>可折叠到 0"]
+        Nav["NavMenu"]
+        Main["主内容区"]
+        Side["右侧 Sidebar"]
     end
     Nav --- Main --- Side
 ```

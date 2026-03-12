@@ -5,34 +5,32 @@
 ```mermaid
 graph TD
     subgraph Stores
-        locationStore["locationStore<br/>• lastLocation（当前）<br/>• lastLocation$traveling<br/>• $travelingToLocation"]
-        instanceStore["instanceStore<br/>• cachedInstances Map<br/>  （200 条 LRU）<br/>• 每实例 playerList<br/>• queuedInstances"]
+        locationStore["locationStore"]
+        instanceStore["instanceStore"]
     end
 
     subgraph Coordinators
-        locationCoord["locationCoordinator<br/>• runSetCurrentUserLocationFlow()<br/>• parseLocationTag()"]
-        instanceCoord["instanceCoordinator<br/>• getInstance()<br/>• 玩家列表管理"]
-        gameCoord["gameCoordinator<br/>• CheckGameRunning()<br/>• 实例启动"]
+        locationCoord["locationCoordinator"]
+        instanceCoord["instanceCoordinator"]
+        gameCoord["gameCoordinator"]
     end
 
     subgraph Inputs["输入"]
-        ws["WebSocket<br/>user-location<br/>friend-location"]
-        api["VRChat API<br/>GET /instances/{id}"]
-        gameLog["Game Log<br/>来自 VRChat 日志<br/>的位置事件"]
-        photon["Photon<br/>实时玩家<br/>在线数据"]
+        ws["WebSocket"]
+        api["VRChat API"]
+        gameLog["Game Log"]
     end
 
     subgraph Views["视图"]
-        friendsLoc["FriendsLocations<br/>位置卡片"]
-        sidebar["Sidebar<br/>好友条目中的<br/>位置显示"]
-        playerList["PlayerList<br/>同世界玩家"]
+        friendsLoc["FriendsLocations"]
+        sidebar["Sidebar"]
+        playerList["PlayerList"]
     end
 
     ws --> locationCoord
     ws --> instanceCoord
     api --> instanceCoord
     gameLog --> locationCoord
-    photon --> instanceStore
 
     locationCoord --> locationStore
     instanceCoord --> instanceStore
@@ -40,6 +38,17 @@ graph TD
     locationStore --> Views
     instanceStore --> Views
 ```
+
+| 组件 | 说明 |
+|------|------|
+| **locationStore** | lastLocation（当前）, lastLocation$traveling, $travelingToLocation |
+| **instanceStore** | cachedInstances Map（200 条 LRU）, 每实例 playerList, queuedInstances |
+| **locationCoordinator** | runSetCurrentUserLocationFlow(), parseLocationTag() |
+| **instanceCoordinator** | getInstance(), 玩家列表管理 |
+| **gameCoordinator** | CheckGameRunning(), 实例启动 |
+| **WebSocket** | user-location, friend-location |
+| **VRChat API** | GET /instances/{id} |
+| **Game Log** | 来自 VRChat 日志的位置事件 |
 
 ## 位置追踪
 
@@ -121,8 +130,7 @@ cachedInstances = reactive(new Map())  // instanceId → 实例数据
 
 每个实例追踪其玩家列表。数据来自：
 1. **VRChat API** — `GET /instances/{id}` 返回用户列表
-2. **Photon 事件** — 实时加入/离开事件
-3. **Game Log** — 当前用户在该实例中时
+2. **Game Log** — 当前用户在该实例中时
 
 ### 队列系统
 
@@ -154,7 +162,6 @@ runSetCurrentUserLocationFlow(location, $location_at)
 │   │   └── 完成：lastLocation = newLocation
 │   └── 否：
 │       └── 刷新实例玩家数
-├── 如果可用，更新 Photon 数据
 └── 如果 VR 活跃，通知 VR 覆盖层
 ```
 
@@ -170,13 +177,6 @@ runSetCurrentUserLocationFlow(location, $location_at)
 | `OnPlayerJoined` | 其他玩家加入 | 玩家 userId, displayName |
 | `OnPlayerLeft` | 玩家离开 | 玩家 userId, displayName |
 
-### Photon 集成
-
-`photonStore` 提供实时玩家在线数据：
-- 玩家加入/离开事件（比 API 轮询更快）
-- 玩家模型数据
-- 实例级网络事件
-
 ### VR 覆盖层
 
 位置数据显示在 VR 手腕覆盖层上：
@@ -189,8 +189,8 @@ runSetCurrentUserLocationFlow(location, $location_at)
 | 模块 | 读取 | 写入 |
 |------|------|------|
 | **locationStore** | —（叶子 store） | — |
-| **instanceStore** | user, friend, group, location, world, notification, photon, sharedFeed, appearanceSettings | — |
-| **locationCoordinator** | advancedSettings, gameLog, game, instance, location, notification, photon, user, vr | location, instance, gameLog |
+| **instanceStore** | user, friend, group, location, world, notification, sharedFeed, appearanceSettings | — |
+| **locationCoordinator** | advancedSettings, gameLog, game, instance, location, notification, user, vr | location, instance, gameLog |
 | **instanceCoordinator** | instance | instance |
 | **gameCoordinator** | advancedSettings, avatar, gameLog, game, instance, launch, location, modal, notification, updateLoop, user, vr, world | game, instance, location |
 
@@ -199,5 +199,5 @@ runSetCurrentUserLocationFlow(location, $location_at)
 :::
 
 ::: warning 高风险区域
-`instanceStore` 有 **6 个依赖 store**，并与 Photon 网络集成。改变实例数据结构可能会级联到游戏日志、通知、共享 feed 和 VR 覆盖层。
+`instanceStore` 有 **6 个依赖 store**。改变实例数据结构可能会级联到游戏日志、通知、共享 feed 和 VR 覆盖层。
 :::

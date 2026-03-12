@@ -5,34 +5,32 @@
 ```mermaid
 graph TD
     subgraph Stores
-        locationStore["locationStore<br/>• lastLocation (current)<br/>• lastLocation$traveling<br/>• $travelingToLocation"]
-        instanceStore["instanceStore<br/>• cachedInstances Map<br/>  (200-entry LRU)<br/>• playerList per instance<br/>• queuedInstances"]
+        locationStore["locationStore"]
+        instanceStore["instanceStore"]
     end
 
     subgraph Coordinators
-        locationCoord["locationCoordinator<br/>• runSetCurrentUserLocationFlow()<br/>• parseLocationTag()"]
-        instanceCoord["instanceCoordinator<br/>• getInstance()<br/>• Player list management"]
-        gameCoord["gameCoordinator<br/>• CheckGameRunning()<br/>• Instance launch"]
+        locationCoord["locationCoordinator"]
+        instanceCoord["instanceCoordinator"]
+        gameCoord["gameCoordinator"]
     end
 
     subgraph Inputs
-        ws["WebSocket<br/>user-location<br/>friend-location"]
-        api["VRChat API<br/>GET /instances/{id}"]
-        gameLog["Game Log<br/>Location events from<br/>VRChat log files"]
-        photon["Photon<br/>Real-time player<br/>presence data"]
+        ws["WebSocket"]
+        api["VRChat API"]
+        gameLog["Game Log"]
     end
 
     subgraph Views
-        friendsLoc["FriendsLocations<br/>Location cards"]
-        sidebar["Sidebar<br/>Location display<br/>in friend entries"]
-        playerList["PlayerList<br/>In-world players"]
+        friendsLoc["FriendsLocations"]
+        sidebar["Sidebar"]
+        playerList["PlayerList"]
     end
 
     ws --> locationCoord
     ws --> instanceCoord
     api --> instanceCoord
     gameLog --> locationCoord
-    photon --> instanceStore
 
     locationCoord --> locationStore
     instanceCoord --> instanceStore
@@ -40,6 +38,17 @@ graph TD
     locationStore --> Views
     instanceStore --> Views
 ```
+
+| Component | Details |
+|-----------|--------|
+| **locationStore** | lastLocation (current), lastLocation$traveling, $travelingToLocation |
+| **instanceStore** | cachedInstances Map (200-entry LRU), playerList per instance, queuedInstances |
+| **locationCoordinator** | runSetCurrentUserLocationFlow(), parseLocationTag() |
+| **instanceCoordinator** | getInstance(), player list management |
+| **gameCoordinator** | CheckGameRunning(), instance launch |
+| **WebSocket** | user-location, friend-location |
+| **VRChat API** | GET /instances/{id} |
+| **Game Log** | Location events from VRChat log files |
 
 ## Location Tracking
 
@@ -121,8 +130,7 @@ cachedInstances = reactive(new Map())  // instanceId → instance data
 
 Each instance tracks its player list. This data comes from:
 1. **VRChat API** — `GET /instances/{id}` returns user list
-2. **Photon events** — Real-time join/leave events
-3. **Game Log** — When current user is in the instance
+2. **Game Log** — When current user is in the instance
 
 ### Queue System
 
@@ -154,7 +162,6 @@ runSetCurrentUserLocationFlow(location, $location_at)
 │   │   └── Finalize: lastLocation = newLocation
 │   └── No:
 │       └── Refresh instance player count
-├── Update Photon data if available
 └── Notify VR overlay if active
 ```
 
@@ -170,13 +177,6 @@ The `gameLogCoordinator` creates location-related log entries:
 | `OnPlayerJoined` | Another player joins | player userId, displayName |
 | `OnPlayerLeft` | A player leaves | player userId, displayName |
 
-### Photon Integration
-
-The `photonStore` provides real-time player presence:
-- Player join/leave events (faster than API polling)
-- Player avatar data
-- Instance-level networking events
-
 ### VR Overlay
 
 Location data is displayed on the VR wrist overlay:
@@ -189,8 +189,8 @@ Location data is displayed on the VR wrist overlay:
 | Module | Reads From | Writes To |
 |--------|-----------|-----------|
 | **locationStore** | — (leaf store) | — |
-| **instanceStore** | user, friend, group, location, world, notification, photon, sharedFeed, appearanceSettings | — |
-| **locationCoordinator** | advancedSettings, gameLog, game, instance, location, notification, photon, user, vr | location, instance, gameLog |
+| **instanceStore** | user, friend, group, location, world, notification, sharedFeed, appearanceSettings | — |
+| **locationCoordinator** | advancedSettings, gameLog, game, instance, location, notification, user, vr | location, instance, gameLog |
 | **instanceCoordinator** | instance | instance |
 | **gameCoordinator** | advancedSettings, avatar, gameLog, game, instance, launch, location, modal, notification, updateLoop, user, vr, world | game, instance, location |
 
@@ -199,5 +199,5 @@ Location data is displayed on the VR wrist overlay:
 :::
 
 ::: warning High-risk area
-`instanceStore` has **6 dependent stores** and integrates with Photon networking. Changes to instance data shape can cascade to game log, notifications, shared feed, and VR overlay.
+`instanceStore` has **6 dependent stores**. Changes to instance data shape can cascade to game log, notifications, shared feed, and VR overlay.
 :::

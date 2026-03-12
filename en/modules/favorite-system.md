@@ -10,23 +10,23 @@ graph TD
     end
 
     subgraph Coordinator["favoriteCoordinator"]
-        ops["• addFavorite()<br/>• removeFavorite()<br/>• moveFavorite()<br/>• renameFavoriteGroup()"]
+        ops["addFavorite / removeFavorite<br/>moveFavorite / renameFavoriteGroup"]
     end
 
     subgraph API["api/favorite.js"]
-        endpoints["GET /favorites<br/>POST /favorites<br/>DELETE /favorites/{id}<br/>GET /favorites/groups"]
+        endpoints["CRUD + groups"]
     end
 
     subgraph Views
-        favFriends["Favorites/Friends<br/>Favorite friend groups"]
-        favWorlds["Favorites/Worlds<br/>Favorite world groups"]
-        favAvatars["Favorites/Avatars<br/>Favorite avatar groups"]
+        favFriends["Favorite Friends"]
+        favWorlds["Favorite Worlds"]
+        favAvatars["Favorite Avatars"]
     end
 
     subgraph Consumers["Other Consumers"]
-        friendStore["friendStore<br/>allFavoriteFriendIds<br/>isVIP flags"]
-        sidebar["Sidebar<br/>VIP friend section"]
-        locations["FriendsLocations<br/>Favorite tab"]
+        friendStore["friendStore"]
+        sidebar["Sidebar"]
+        locations["FriendsLocations"]
     end
 
     API --> Store

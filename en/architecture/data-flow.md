@@ -6,16 +6,26 @@ Every API call follows this path:
 
 ```mermaid
 flowchart TD
-    A["User Action / WebSocket Event / Update Loop Timer"] --> B["API Layer<br/>src/api/*.js"]
-    B --> C["Request Service<br/>src/services/request.js<br/>• buildRequestInit()<br/>• deduplicateGETs()<br/>• parseResponse()"]
-    C --> D["WebApi Bridge<br/>src/services/webapi.js<br/>• Windows: WebApi.Execute(options)<br/>• Linux: WebApi.ExecuteJson(json)"]
-    D --> E["C# Backend<br/>HTTP proxy to VRChat"]
+    A["User Action / WebSocket / Update Loop"] --> B["API Layer"]
+    B --> C["Request Service"]
+    C --> D["WebApi Bridge"]
+    D --> E["C# Backend"]
     E --> F["VRChat API"]
     F --> E --> D --> C --> B
-    B --> G["Coordinator<br/>src/coordinators/*.js<br/>• apply*() side-effects<br/>• cross-store orchestration"]
-    G --> H["Pinia Stores<br/>src/stores/*.js<br/>• reactive Map/Set<br/>• computed properties"]
-    H --> I["Vue Components<br/>Automatic reactivity"]
+    B --> G["Coordinator"]
+    G --> H["Pinia Store"]
+    H --> I["Vue Components"]
 ```
+
+| Node | Path | Details |
+|------|------|---------|
+| API Layer | src/api/*.js | — |
+| Request Service | src/services/request.js | buildRequestInit(), deduplicateGETs(), parseResponse() |
+| WebApi Bridge | src/services/webapi.js | Windows: WebApi.Execute(options) / Linux: WebApi.ExecuteJson(json) |
+| C# Backend | — | HTTP proxy to VRChat |
+| Coordinator | src/coordinators/*.js | apply*() side-effects, cross-store orchestration |
+| Pinia Store | src/stores/*.js | reactive Map/Set, computed properties |
+| Vue Components | — | Automatic reactivity |
 
 ## WebSocket Real-Time Event Flow
 
@@ -138,13 +148,13 @@ The `updateLoop` store manages periodic background tasks:
 ```mermaid
 flowchart LR
     subgraph L1["Layer 1: Vue Query Cache"]
-        QC["TanStack QueryClient<br/>• retry: 1<br/>• no focus refetch<br/>• recency-based replacement"]
+        QC["TanStack QueryClient"]
     end
     subgraph L2["Layer 2: Entity Cache"]
-        EC["entityCache.js<br/>• Compares timestamps:<br/>  updated_at, last_activity,<br/>  last_login, $fetchedAt<br/>• Only replaces if newer"]
+        EC["entityCache.js"]
     end
     subgraph L3["Layer 3: Store Maps"]
-        SM["Pinia Store Maps<br/>• reactive(new Map())<br/>• cachedUsers, friends,<br/>  cachedInstances<br/>• Computed derivations"]
+        SM["Pinia Store Maps"]
     end
 
     QC --> EC --> SM
