@@ -101,6 +101,14 @@ export default withMermaid(
                                         text: '模块依赖',
                                         link: '/zh/architecture/dependencies',
                                     },
+                                    {
+                                        text: '前端改动入口地图',
+                                        link: '/zh/architecture/change-entry-map',
+                                    },
+                                    {
+                                        text: 'Store 边界规则',
+                                        link: '/zh/architecture/store-boundary-rules',
+                                    },
                                 ],
                             },
                             {

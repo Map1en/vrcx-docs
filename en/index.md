@@ -18,4 +18,4 @@ Friend system, Favorite system, Instance & Location — the 3 most complex subsy
 
 ### By the Numbers
 
-360+ components, 30+ Pinia stores, 24 coordinators, 17 view domains, 15 languages, 1 maintainer
+360+ components, 30+ Pinia stores, 24 coordinators, 17 view domains, 15 languages
