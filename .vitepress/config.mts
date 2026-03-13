@@ -53,6 +53,10 @@ export default withMermaid(
                                         text: 'Store Boundary Rules',
                                         link: '/en/architecture/store-boundary-rules',
                                     },
+                                    {
+                                        text: 'Backend Architecture',
+                                        link: '/en/architecture/backend',
+                                    },
                                 ],
                             },
                             {
@@ -143,6 +147,10 @@ export default withMermaid(
                                     {
                                         text: 'Store 边界规则',
                                         link: '/zh/architecture/store-boundary-rules',
+                                    },
+                                    {
+                                        text: '后端架构参考',
+                                        link: '/zh/architecture/backend',
                                     },
                                 ],
                             },
