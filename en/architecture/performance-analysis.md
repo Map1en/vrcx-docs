@@ -294,18 +294,31 @@ While the new **Global Search** (`globalSearch.js` + `searchWorker.js`) uses a W
 
 ### Additional Concern — Deep Watchers in globalSearch.js
 
+`globalSearch.js` lines 169-203 use 6 `deep: true` watchers:
+
 ```javascript
-// 6 deep watchers, each triggering full data serialization to worker
+// globalSearch.js — startIndexWatchers()
 watch(() => friendStore.friends, () => scheduleIndexUpdate(), { deep: true });
 watch(() => avatarStore.cachedAvatars, () => scheduleIndexUpdate(), { deep: true });
-// ... 4 more
+watch(() => worldStore.cachedWorlds, () => scheduleIndexUpdate(), { deep: true });
+watch(() => groupStore.currentUserGroups, () => scheduleIndexUpdate(), { deep: true });
+watch(() => favoriteStore.favoriteAvatars, () => scheduleIndexUpdate(), { deep: true });
+watch(() => favoriteStore.favoriteWorlds, () => scheduleIndexUpdate(), { deep: true });
 ```
 
-Each `deep: true` watcher on a large reactive `Map` triggers Vue's internal deep traversal (visiting every nested property), then `sendIndexUpdate()` serializes **all data** to the worker via `postMessage`. The 200ms debounce mitigates frequency, but the serialization cost is O(total data size).
+**Mitigations (already implemented):**
+- Wrapped in `effectScope`, watchers are only active when the search panel is open, destroyed on close
+- 200ms debounce merges frequent triggers
+- Actual search logic runs in a Web Worker
+
+**Remaining issues:**
+- `deep: true` on large reactive Maps still triggers Vue's internal deep traversal (visiting every nested property)
+- `sendIndexUpdate()` iterates all 6 large Maps on each trigger, building plain-data snapshots sent via `postMessage` **structured clone** to the worker
+- Serialization cost is O(friends + avatars + worlds + groups + favAvatars + favWorlds), potentially MB-scale with 4000 friends
 
 ### Severity: 🟡 Medium
 
-Quick Search is debounced and capped at 4 results, limiting the visible impact. But with 4000 friends, each keystroke may process 4000 × `removeConfusables` calls.
+Quick Search is debounced and capped at 4 results, limiting the visible impact. But with 4000 friends, each keystroke may process 4000 × `removeConfusables` calls. globalSearch's deep watchers, while limited to when open, still trigger full snapshot rebuilds on any deep mutation while the panel is active.
 
 ### Future Direction
 
@@ -313,32 +326,70 @@ Quick Search is debounced and capped at 4 results, limiting the visible impact. 
 
 2. **Replace deep watchers with targeted change tracking**: Instead of deep-watching entire Maps, listen to specific mutation events and only send delta updates to the worker.
 
+3. **Lazy serialization**: Only serialize data when the worker index is stale, rather than rebuilding on every Map mutation.
+
 ---
 
-## Bottleneck 6 — SharedFeed `unshift` + Deep Watch
+## Bottleneck 6 — SharedFeed `unshift` + Deep Watch + Async Rebuild
 
 ### Location
 
-`src/stores/sharedFeed.js` line 31 (`rebuildOnPlayerJoining`)
+- `src/stores/sharedFeed.js` line 33 (`rebuildOnPlayerJoining`)
+- `src/stores/sharedFeed.js` line 89 (`currentTravelers` deep watch)
 
 ### Problem
 
+**1. `unshift` O(n) operation:**
+
 ```javascript
 // Array.unshift is O(n) — shifts all existing elements
-onPlayerJoining.unshift(newEntry);
+newOnPlayerJoining.unshift(feedEntry);
+// ...
+sharedFeedData.value.unshift(...onPlayerJoining.value);
 ```
 
-Combined with any `deep: true` watchers on the feed array, this creates a pattern where **every new event** causes O(n) element shifting **plus** a full deep-traversal of the array by Vue's reactivity system.
+**2. `currentTravelers` `deep: true` watch:**
 
-### Severity: 🟢 Low
+```javascript
+// sharedFeed.js:89
+watch(
+    () => userStore.currentTravelers,
+    () => rebuildOnPlayerJoining(),
+    { deep: true }
+);
+```
 
-The `maxEntries` cap limits array size. In practice this is not a major bottleneck, but the pattern is suboptimal.
+`currentTravelers` is a reactive Map. Every time a friend starts/stops traveling, the deep watch fires, invoking `rebuildOnPlayerJoining()`.
+
+**3. Serial `await` in async rebuild:**
+
+```javascript
+// Inside rebuildOnPlayerJoining()
+const worldName = await getWorldName(ref.$location.worldId);   // may trigger API request
+const groupName = await getGroupName(ref.$location.groupId);   // same
+```
+
+Each traveling friend requires `await`ing world and group name lookups. When multiple friends travel simultaneously, the rebuild function waits serially, and since the deep watch fires frequently, this can lead to continuous recalculation.
+
+### Complexity
+
+- `unshift` itself is limited by `maxEntries` (25), minimal impact
+- The real issue is: frequent deep watch triggers × serial await chain per trigger
+- During travel event bursts (e.g., many friends entering a new world), this produces a cascade of rebuilds
+
+### Severity: 🟡 Medium
+
+`maxEntries = 25` limits the `unshift` impact. However, the deep watch + async rebuild combination creates unnecessary CPU overhead and potential race conditions during travel event bursts.
 
 ### Future Direction
 
 1. **Ring buffer**: Use a fixed-size circular buffer instead of `unshift`. New entries overwrite the oldest entry without shifting.
 
 2. **`shallowRef` + manual trigger**: Use `shallowRef([])` for the feed array and call `triggerRef()` after mutation, avoiding Vue's deep traversal.
+
+3. **Debounce rebuild**: Add debounce to `rebuildOnPlayerJoining`, merging multiple travel event triggers within a short window.
+
+4. **Parallelize await**: Change `getWorldName` / `getGroupName` to `Promise.all` for parallel fetching, reducing serial wait time.
 
 ---
 
@@ -359,25 +410,277 @@ const friendLocationTags = new Set(
 );
 ```
 
+### Complexity
+
+- `cleanInstanceCache`: O(friends) per instance apply — called frequently
+
+### Severity: 🟡 Medium
+
+### Future Direction
+
+Maintain a reactive `Set<tag>` of current friend location tags, updated incrementally when friends change location. `cleanInstanceCache` can then use O(1) lookups.
+
+---
+
+## Bottleneck 7 — Instance Dialog Room Aggregation Full Traversal + `some()` Dedup
+
+### Location
+
+- `src/stores/instance.js` line 773 (`applyWorldDialogInstances`)
+- `src/stores/instance.js` lines 786-800 (full friend traversal)
+- `src/stores/instance.js` line 991 (`applyGroupDialogInstances`)
+
+### Problem
+
+**1. Full friend traversal:**
+
 ```javascript
-// vrcxCoordinator.js line 62-74: O(instances × friends)
-instanceStore.cachedInstances.forEach((ref, id) => {
-    if ([...friendStore.friends.values()].some(   // spread AGAIN per instance
-        (f) => f.$location?.tag === id
-    )) { return; }
-});
+// applyWorldDialogInstances: iterates all friends to find those in target world
+for (const friend of friendStore.friends.values()) {   // O(friends)
+    const { ref } = friend;
+    if (ref.$location.worldId !== D.id || ...) {
+        continue;
+    }
+    instance = instances[instanceId];
+    instance.users.push(ref);
+}
+```
+
+Both `applyWorldDialogInstances` and `applyGroupDialogInstances` fully traverse `friendStore.friends` to find friends in a specific world/group.
+
+**2. `some()` dedup:**
+
+```javascript
+// instance.js:773 — dedup using some() on instance users
+for (const friend of friendsInInstance.values()) {
+    const addUser = !instance.users.some(function (user) {
+        return friend.userId === user.id;       // O(users) per friend
+    });
+    if (addUser) {
+        instance.users.push(ref);
+    }
+}
+```
+
+For each friend in `friendsInInstance`, `some()` checks if they're already in `instance.users`. This is an O(friendsInInstance × users) nested loop.
+
+### Complexity
+
+- Full traversal: O(friends) per dialog open (4000 friends = 4000 iterations)
+- `some()` dedup: O(k²), k = friends in instance (usually small, large rooms < 80)
+- Actual impact depends on dialog open frequency and friend count
+
+### Severity: 🟡 Medium
+
+The `some()` dedup k is typically small (≤ 80), but the full friend traversal executes every time a world/group dialog is opened.
+
+### Future Direction
+
+1. **Maintain `worldId → Set<userId>` index**: Incrementally maintained when friend locations change, O(1) lookup on dialog open.
+2. **Replace `some()` dedup with `Set`**: Use `Set<userId>` instead of `Array.some()`, making dedup O(1).
+
+---
+
+## Bottleneck 8 — GameLog `insertGameLogSorted` Linear Insertion
+
+### Location
+
+`src/stores/gameLog/index.js` line 131 (`insertGameLogSorted`)
+
+### Problem
+
+```javascript
+function insertGameLogSorted(entry) {
+    const arr = gameLogTableData.value;
+    for (let i = 1; i < arr.length; i++) {          // O(n) linear scan
+        if (compareGameLogRows(entry, arr[i]) < 0) {
+            gameLogTableData.value = [
+                ...arr.slice(0, i),                  // O(n) array copy
+                entry,
+                ...arr.slice(i)                      // O(n) array copy
+            ];
+            return;
+        }
+    }
+    gameLogTableData.value = [...arr, entry];        // O(n) append
+}
+```
+
+Each insertion performs:
+1. **Linear scan** to find insertion position: O(n)
+2. **Spread-rebuilds the entire array**: O(n)
+3. Total: **O(n) per insertion**
+
+### Mitigating Factors
+
+- `gameLogTableData` uses `shallowRef`, avoiding Vue's deep tracking of array elements
+- Head/tail insertion has fast paths (first or last position); most new logs arrive in chronological order
+- Array size is limited by UI table display
+
+### Complexity
+
+| Table size | Worst-case insertion cost |
+|------------|-------------------------|
+| 100 | Negligible |
+| 1,000 | ~2,000 operations |
+| 10,000 | ~20,000 operations |
+
+### Severity: 🟢 Low
+
+Due to fast paths and `shallowRef` mitigation, impact is minimal in most scenarios. May become a bottleneck with high-frequency events (e.g., frequent join/leave in large rooms) + large tables.
+
+### Future Direction
+
+1. **Binary search**: Replace linear scan with binary search, O(log n) to find insertion position.
+2. **`splice` instead of spread**: Use `arr.splice(i, 0, entry)` for in-place insertion, avoiding new array creation. Combined with `shallowRef`, requires explicit `triggerRef()`.
+
+---
+
+## Bottleneck 9 — `getAllUserStats` Large SQL IN Clause
+
+### Location
+
+- `src/services/database/gameLog.js` line 472 (`getAllUserStats`)
+- `src/stores/friend.js` line 609 (call site)
+
+### Problem
+
+```javascript
+// database/gameLog.js — getAllUserStats
+var userIdsString = '';
+for (var userId of userIds) {
+    userIdsString += `'${userId}', `;              // manual string concatenation
+}
+var displayNamesString = '';
+for (var displayName of displayNames) {
+    displayNamesString += `'${displayName.replaceAll("'", "''")}'，`;
+}
+
+await sqliteService.execute(
+    (dbRow) => { ... },
+    `SELECT ... FROM gamelog_join_leave g
+     WHERE g.user_id IN (${userIdsString})           -- 4000 IDs!
+        OR g.display_name IN (${displayNamesString}) -- 4000 names!
+     GROUP BY g.user_id, g.display_name
+     ORDER BY g.user_id DESC`
+);
 ```
 
 ### Complexity
 
-- `cleanInstanceCache`: O(friends) per instance apply — called frequently
-- `clearVRCXCache` instance loop: O(instances × friends) — called infrequently but O(n×m) is wasteful
+| Parameter | Estimated value |
+|-----------|----------------|
+| IN clause userIds | ~4000 |
+| IN clause displayNames | ~4000 |
+| `gamelog_join_leave` rows | ~5,000,000 |
+| SQL string length | ~200,000 characters |
 
-### Severity: 🟡 Medium (instance cache) / 🟢 Low (clearVRCXCache)
+**Analysis:**
+
+1. **Massive SQL string**: 4000 userIds + 4000 displayNames generate ~200K char SQL
+2. **OR joining two INs**: `WHERE id IN (...) OR name IN (...)` — SQLite cannot use two indexes simultaneously
+3. **GROUP BY full scan**: Groups and aggregates over matched rows
+4. **Potential SQL injection**: `displayName` only escaped with `replaceAll("'", "''")`, not complete protection
+
+### Severity: 🟡 Medium
+
+This function is called once during friend list initialization (not a sustained hot path), but with 4000 friends it can cause multi-second SQLite query blocking.
 
 ### Future Direction
 
-Maintain a reactive `Set<tag>` of current friend location tags, updated incrementally when friends change location. Both functions can then use O(1) lookups.
+1. **Temp table + JOIN**: Insert userIds and displayNames into a temp table, use JOIN instead of IN clauses
+2. **Batch queries**: Split 4000 IDs into multiple batches (e.g., 500 per batch), query individually
+3. **Parameterized queries**: Use `@param` parameter binding instead of string concatenation, eliminating injection risk
+
+---
+
+## Bottleneck 10 — `clearVRCXCache` Nested Scan
+
+### Location
+
+`src/coordinators/vrcxCoordinator.js` lines 62-74
+
+### Problem
+
+```javascript
+instanceStore.cachedInstances.forEach((ref, id) => {
+    if (
+        [...friendStore.friends.values()].some(   // spreads entire friends Map per instance!
+            (f) => f.$location?.tag === id
+        )
+    ) {
+        return;
+    }
+    if (Date.parse(ref.$fetchedAt) < Date.now() - 3600000) {
+        instanceStore.cachedInstances.delete(id);
+    }
+});
+```
+
+For each cached instance, the `friends` Map is spread into an array and `some()` performs a linear search.
+
+### Complexity
+
+- O(instances × friends)
+- 100 cached instances × 4000 friends = **400,000 iterations**
+- Plus GC pressure from creating temporary arrays (`[...friends.values()]`) on each iteration
+
+### Severity: 🟢 Low
+
+`clearVRCXCache` is called infrequently (manual trigger or periodic cleanup), but the code pattern is extremely inefficient.
+
+### Future Direction
+
+Reuse the `Set<tag>` approach from Supplementary Finding — pre-build a friend location tag set, then use O(1) lookups.
+
+---
+
+## Bottleneck 11 — Charts Mutual Friends Serial API Requests
+
+### Location
+
+`src/stores/charts.js` line 218 (`fetchMutualGraph`)
+
+### Problem
+
+```javascript
+// charts.js:218 — serial iteration over every friend
+for (let index = 0; index < friendSnapshot.length; index += 1) {
+    const friend = friendSnapshot[index];
+    const mutuals = await fetchMutualFriends(friend.id);   // serial await
+    mutualMap.set(friend.id, { friend, mutuals });
+}
+```
+
+Mutual friend lists are fetched serially per friend, throttled by the rate limiter (5 requests/second).
+
+### Complexity
+
+| Friends | Min requests | Theoretical time (5 req/s) |
+|---------|-------------|---------------------------|
+| 100 | 100 | ~20s |
+| 500 | 500 | ~100s |
+| 2000 | 2000 | ~6.7 min |
+| 4000 | 4000 | ~13.3 min |
+
+**Note:** If some friends have over 100 mutual friends, pagination is needed, increasing actual request count.
+
+### Mitigating Factors (already implemented)
+
+- Cancellation support (`cancelRequested` flag)
+- 429 rate-limit auto-backoff (`executeWithBackoff`)
+- Results persisted to database (`saveMutualGraphSnapshot`), avoiding re-fetching
+- Friend count changes mark `needsRefetch`, no automatic re-fetch
+
+### Severity: 🟡 Medium
+
+Does not block UI (async execution), but poor user experience — 4000 friends requires 10+ minute wait. This is more of an API limitation than a code issue.
+
+### Future Direction
+
+1. **Limited concurrency**: Use 2-3 concurrent requests within rate limit allowance, reducing total time by ~50-60%
+2. **Incremental updates**: Only fetch mutual friend data for newly added friends, merging with cached data
+3. **Background pre-fetch**: Gradually fetch during application idle time, rather than blocking on user request
 
 ---
 
@@ -390,9 +693,13 @@ Maintain a reactive `Set<tag>` of current friend location tags, updated incremen
 | **P1** | `notifications.js` SQL injection | Security | 🔴 Critical | ⭐ Easy |
 | **P2** | Friend list 5× sort recompute | 5 × O(n log n) | 🟡 Medium | ⭐⭐ Medium |
 | **P2** | globalSearch deep watcher serialization | O(all data) | 🟡 Medium | ⭐⭐ Medium |
+| **P2** | `getAllUserStats` large SQL IN clause | O(rows) + massive SQL | 🟡 Medium | ⭐⭐ Medium |
 | **P3** | Instance cache full friend traversal | O(friends) per call | 🟡 Medium | ⭐ Easy |
+| **P3** | Instance dialog `some()` dedup | O(k²) per dialog | 🟡 Medium | ⭐ Easy |
+| **P3** | SharedFeed deep watch + async rebuild | O(travelers) × await | 🟡 Medium | ⭐⭐ Medium |
 | **P3** | Mutual Friends graph O(n²) | O(n²) edges | 🟡 Medium | ⭐⭐⭐ Hard |
-| **P4** | SharedFeed unshift | O(entries) | 🟢 Low | ⭐ Easy |
+| **P3** | Charts serial API requests | O(friends) × API throttle | 🟡 Medium | ⭐⭐ Medium |
+| **P4** | GameLog linear insertion | O(n) per insert | 🟢 Low | ⭐ Easy |
 | **P4** | clearVRCXCache nested iteration | O(instances × friends) | 🟢 Low | ⭐ Easy |
 
 ---
