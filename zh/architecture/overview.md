@@ -11,7 +11,7 @@
 | Tailwind CSS | 4.2 | 原子化 CSS |
 | Reka-ui | — | 无头组件库 |
 | TanStack Vue Query | — | 服务端状态缓存 |
-| vue-i18n | 11.3 | 国际化（15 种语言） |
+| vue-i18n | 11.3 | 国际化（14 种语言） |
 | Electron | 39.8 | 桌面容器（Linux/Mac） |
 | CEF | — | 桌面容器（Windows） |
 
@@ -20,7 +20,7 @@
 ```mermaid
 graph TD
     subgraph Layer5["第 5 层 — 视图 & 页面"]
-        Views["17 个视图域<br/>86 个 Vue 文件"]
+        Views["18 个视图域<br/>96 个 Vue 文件"]
     end
 
     subgraph Layer4["第 4 层 — 组件"]
@@ -28,12 +28,12 @@ graph TD
     end
 
     subgraph Layer3["第 3 层 — 状态管理"]
-        Stores["30+ Pinia Store"]
+        Stores["35+ Pinia Store"]
         Queries["Vue Query 缓存"]
     end
 
     subgraph Layer2["第 2 层 — 业务逻辑"]
-        Coordinators["24 个 Coordinator"]
+        Coordinators["23 个 Coordinator"]
         Composables["6 个 Composable"]
     end
 
@@ -62,7 +62,7 @@ graph TD
 
 ## 逐层分解
 
-### 第 5 层 — 视图（17 个域）
+### 第 5 层 — 视图（18 个域）
 
 | 域 | 路径 | 用途 |
 |----|------|------|
@@ -82,6 +82,7 @@ graph TD
 | Charts | `views/Charts/` | 实例活动 & 共同好友图表 |
 | Tools | `views/Tools/` | 图库、截图元数据、导出 |
 | Settings | `views/Settings/` | 7 个选项卡 + 8 个弹窗 |
+| Dashboard | `views/Dashboard/` | 可自定义仪表盘（多行 Widget 布局） |
 | Layout | `views/Layout/` | 主三面板布局容器 |
 
 ### 第 4 层 — 组件
@@ -92,20 +93,21 @@ graph TD
 | 功能弹窗 (`components/dialogs/`) | 20+ | UserDialog (11 标签页), WorldDialog (4 标签页), GroupDialog (12+ 标签页) |
 | 顶层组件 | 17 | NavMenu, StatusBar, GlobalSearchDialog, Location, Timer... |
 
-### 第 3 层 — Pinia Store（30+）
+### 第 3 层 — Pinia Store（35+）
 
 | 类别 | Store |
 |------|-------|
-| **核心实体** | user, friend, avatar, world, instance, group, location |
+| **核心实体** | user, friend, avatar, avatarProvider, world, instance, group, location |
 | **功能** | feed, favorite, search, gallery, invite, moderation |
 | **实时** | notification（复杂）, vrcStatus |
 | **游戏** | game, gameLog (目录), launch |
-| **UI 状态** | ui, modal, globalSearch, sharedFeed, charts |
+| **UI 状态** | ui, modal, globalSearch, sharedFeed, charts, dashboard |
 | **设置** | settings/general, appearance, advanced, notifications, discordPresence, wristOverlay |
 | **系统** | auth, updateLoop, vrcx, vrcxUpdater |
+| **网络** | photon |
 | **VR** | vr |
 
-### 第 2 层 — Coordinator（24 个）
+### 第 2 层 — Coordinator（23 个）
 
 | 类别 | Coordinator |
 |------|------------|
@@ -119,9 +121,11 @@ graph TD
 
 ### 第 1 层 — API & 服务
 
-**API 模块**（18 个）：auth, user, friend, avatar, world, instance, group, favorite, notification, playerModeration, avatarModeration, image, inventory, prop, misc, vrcPlusIcon, vrcPlusImage
+**API 模块**（18 个）：auth, user, friend, avatar, world, instance, group, favorite, notification, playerModeration, avatarModeration, image, inventory, inviteMessages, prop, misc, vrcPlusIcon, vrcPlusImage
 
-**服务层**：request.js（HTTP + 去重）、websocket.js（实时事件）、sqlite.js（数据库封装）、config.js（键值配置）、webapi.js（C# 桥接）、appConfig.js（调试标志）、watchState.js（响应式标志）、security.js、jsonStorage.js
+**服务层**：request.js（HTTP + 去重）、websocket.js（实时事件）、sqlite.js（数据库封装）、config.js（键值配置）、webapi.js（C# 桥接）、appConfig.js（调试标志）、watchState.js（响应式标志）、security.js、jsonStorage.js、confusables.js（混淆字符检测）、gameLog.js（游戏日志解析）
+
+**Web Worker**：searchWorker.js（全局搜索——混淆字符归一化 + locale-aware 搜索卸载到 Worker 线程）
 
 ## 主布局结构
 

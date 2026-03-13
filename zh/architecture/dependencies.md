@@ -35,6 +35,12 @@ graph LR
     sharedFeed --> friend
     vr --> friend
 
+    %% globalSearch 的额外依赖（Web Worker 内使用）
+    globalSearch --> avatar
+    globalSearch --> world
+    globalSearch --> group
+    globalSearch --> favorite
+
     %% 依赖 instance 的 store
     gameLog --> instance
     notification --> instance
@@ -86,6 +92,7 @@ graph LR
 | **avatar** | 叶子 store | 🟢 低 | 无跨 store 依赖 |
 | **game** | 叶子 store | 🟢 低 | 无跨 store 依赖 |
 | **modal** | 叶子 store | 🟢 低 | 无跨 store 依赖 |
+| **dashboard** | 叶子 store | 🟢 低 | 无 store 依赖——可安全独立修改 |
 
 ## Coordinator → Store 映射表
 

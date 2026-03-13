@@ -11,7 +11,7 @@
 | Tailwind CSS | 4.2 | Utility-first styling |
 | Reka-ui | — | Headless component library |
 | TanStack Vue Query | — | Server-state caching |
-| vue-i18n | 11.3 | Internationalization (15 languages) |
+| vue-i18n | 11.3 | Internationalization (14 languages) |
 | Electron | 39.8 | Desktop wrapper (Linux/Mac) |
 | CEF | — | Desktop wrapper (Windows) |
 
@@ -20,7 +20,7 @@
 ```mermaid
 graph TD
     subgraph Layer5["Layer 5 — Views & Pages"]
-        Views["17 View Domains<br/>86 Vue files"]
+        Views["18 View Domains<br/>96 Vue files"]
     end
 
     subgraph Layer4["Layer 4 — Components"]
@@ -28,12 +28,12 @@ graph TD
     end
 
     subgraph Layer3["Layer 3 — State Management"]
-        Stores["30+ Pinia Stores"]
+        Stores["35+ Pinia Stores"]
         Queries["Vue Query Cache"]
     end
 
     subgraph Layer2["Layer 2 — Business Logic"]
-        Coordinators["24 Coordinators"]
+        Coordinators["23 Coordinators"]
         Composables["6 Composables"]
     end
 
@@ -62,7 +62,7 @@ graph TD
 
 ## Layer-by-Layer Breakdown
 
-### Layer 5 — Views (17 domains)
+### Layer 5 — Views (18 domains)
 
 | Domain | Path | Purpose |
 |--------|------|---------|
@@ -82,6 +82,7 @@ graph TD
 | Charts | `views/Charts/` | Instance activity & mutual friends |
 | Tools | `views/Tools/` | Gallery, screenshot metadata, exports |
 | Settings | `views/Settings/` | 7 tabs + 8 dialogs |
+| Dashboard | `views/Dashboard/` | Customizable dashboard (multi-row widget layout) |
 | Layout | `views/Layout/` | Main 3-panel layout container |
 
 ### Layer 4 — Components
@@ -92,20 +93,21 @@ graph TD
 | Feature Dialogs (`components/dialogs/`) | 20+ | UserDialog (11 tabs), WorldDialog (4 tabs), GroupDialog (12+ tabs) |
 | Root Components | 17 | NavMenu, StatusBar, GlobalSearchDialog, Location, Timer... |
 
-### Layer 3 — Pinia Stores (30+)
+### Layer 3 — Pinia Stores (35+)
 
 | Category | Stores |
 |----------|--------|
-| **Core Entity** | user, friend, avatar, world, instance, group, location |
+| **Core Entity** | user, friend, avatar, avatarProvider, world, instance, group, location |
 | **Features** | feed, favorite, search, gallery, invite, moderation |
 | **Real-time** | notification (complex), vrcStatus |
 | **Game** | game, gameLog (dir), launch |
-| **UI State** | ui, modal, globalSearch, sharedFeed, charts |
+| **UI State** | ui, modal, globalSearch, sharedFeed, charts, dashboard |
 | **Settings** | settings/general, appearance, advanced, notifications, discordPresence, wristOverlay |
 | **System** | auth, updateLoop, vrcx, vrcxUpdater |
+| **Networking** | photon |
 | **VR** | vr |
 
-### Layer 2 — Coordinators (24)
+### Layer 2 — Coordinators (23)
 
 | Category | Coordinators |
 |----------|-------------|
@@ -119,9 +121,11 @@ graph TD
 
 ### Layer 1 — API & Services
 
-**API modules** (18): auth, user, friend, avatar, world, instance, group, favorite, notification, playerModeration, avatarModeration, image, inventory, prop, misc, vrcPlusIcon, vrcPlusImage
+**API modules** (18): auth, user, friend, avatar, world, instance, group, favorite, notification, playerModeration, avatarModeration, image, inventory, inviteMessages, prop, misc, vrcPlusIcon, vrcPlusImage
 
-**Services**: request.js (HTTP + dedup), websocket.js (real-time events), sqlite.js (DB wrapper), config.js (key-value config), webapi.js (C# bridge), appConfig.js (debug flags), watchState.js (reactive flags), security.js, jsonStorage.js
+**Services**: request.js (HTTP + dedup), websocket.js (real-time events), sqlite.js (DB wrapper), config.js (key-value config), webapi.js (C# bridge), appConfig.js (debug flags), watchState.js (reactive flags), security.js, jsonStorage.js, confusables.js (confusable character detection), gameLog.js (game log parsing)
+
+**Web Workers**: searchWorker.js (global search — confusable-character normalization + locale-aware search offloaded to worker thread)
 
 ## Main Layout Structure
 

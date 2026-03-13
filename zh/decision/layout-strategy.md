@@ -147,6 +147,8 @@ VR 模式有：
 | C. 构建自定义仪表盘视图 | 最大灵活性 | 巨大的实现成本，只有重度+大窗口用户受益 |
 | D. 给 FriendsLocations 添加小组件 | 渐进改善 | 可能变得太复杂 |
 
+> **2026-03-13 更新**：方案 C 已部分实现——Dashboard 作为独立路由（非替代 FriendsLocations），支持多行 Widget 布局（Feed / GameLog / Instance）。详见[自定义仪表盘](/zh/modules/dashboard-system)模块页。
+
 ### 同实例好友：在哪里显示
 
 **问题**：同实例分组在 Sidebar 和 FriendsLocations 都存在，有独立开关。用户想在收藏中也能看到。

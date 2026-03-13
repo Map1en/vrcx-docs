@@ -14,8 +14,8 @@ User persona × feature matrix, layout strategy, impact analysis template for ev
 
 ### Module Deep-Dives
 
-Friend system, Favorite system, Instance & Location — the 3 most complex subsystems explained
+Friend system, Favorite system, Instance & Location, Dashboard system, Web Worker architecture, Refactoring directions — 6 module deep-dives
 
 ### By the Numbers
 
-360+ components, 30+ Pinia stores, 24 coordinators, 17 view domains, 15 languages
+360+ components, 35+ Pinia stores, 23 coordinators, 18 view domains, 14 languages

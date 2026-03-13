@@ -27,6 +27,7 @@
 | 游戏日志 | `game-log` | `views/GameLog/GameLog.vue` | `gameLog`, `appearance`, `modal`, `vrcx` | `gameLogCoordinator` |
 | 管理 | `moderation` | `views/Moderation/Moderation.vue` | `moderation`, `appearance`, `modal` | `moderationCoordinator` |
 | 我的模型 | `my-avatars` | `views/MyAvatars/MyAvatars.vue` | `avatar`, `user`, `modal`, `appearance` | `avatarCoordinator`, `imageUploadCoordinator` |
+| 自定义仪表盘 | `dashboard` | `views/Dashboard/Dashboard.vue` | `dashboard` | — |
 
 ## 三条常用定位路径
 

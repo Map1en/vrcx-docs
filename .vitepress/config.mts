@@ -45,6 +45,14 @@ export default withMermaid(
                                         text: 'Module Dependencies',
                                         link: '/en/architecture/dependencies',
                                     },
+                                    {
+                                        text: 'Change Entry Map',
+                                        link: '/en/architecture/change-entry-map',
+                                    },
+                                    {
+                                        text: 'Store Boundary Rules',
+                                        link: '/en/architecture/store-boundary-rules',
+                                    },
                                 ],
                             },
                             {
@@ -78,6 +86,18 @@ export default withMermaid(
                                     {
                                         text: 'Instance & Location',
                                         link: '/en/modules/instance-location',
+                                    },
+                                    {
+                                        text: 'Dashboard System',
+                                        link: '/en/modules/dashboard-system',
+                                    },
+                                    {
+                                        text: 'Web Worker Architecture',
+                                        link: '/en/modules/web-worker',
+                                    },
+                                    {
+                                        text: 'Refactoring Directions',
+                                        link: '/en/modules/refactoring-directions',
                                     },
                                 ],
                             },
@@ -153,6 +173,18 @@ export default withMermaid(
                                     {
                                         text: 'Instance & Location',
                                         link: '/zh/modules/instance-location',
+                                    },
+                                    {
+                                        text: '自定义仪表盘',
+                                        link: '/zh/modules/dashboard-system',
+                                    },
+                                    {
+                                        text: 'Web Worker 架构',
+                                        link: '/zh/modules/web-worker',
+                                    },
+                                    {
+                                        text: '重构方向与进度',
+                                        link: '/zh/modules/refactoring-directions',
                                     },
                                 ],
                             },

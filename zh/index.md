@@ -14,8 +14,8 @@
 
 ### 模块详解
 
-Friend 系统、Favorite 系统、Instance & Location——3 个最复杂子系统的深度解析
+Friend 系统、Favorite 系统、Instance & Location、Dashboard 系统、Web Worker 架构、重构方向 6 个模块解析
 
 ### 数据一览
 
-360+ 组件、30+ Pinia Store、24 Coordinator、17 个页面域、15 种语言
+360+ 组件、35+ Pinia Store、23 Coordinator、18 个页面域、14 种语言

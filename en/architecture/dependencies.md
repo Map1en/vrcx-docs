@@ -35,6 +35,12 @@ graph LR
     sharedFeed --> friend
     vr --> friend
 
+    %% Additional globalSearch dependencies (via Web Worker)
+    globalSearch --> avatar
+    globalSearch --> world
+    globalSearch --> group
+    globalSearch --> favorite
+
     %% Stores that depend on instance
     gameLog --> instance
     notification --> instance
@@ -86,6 +92,7 @@ graph LR
 | **avatar** | Leaf store | 🟢 Low | No cross-store dependencies |
 | **game** | Leaf store | 🟢 Low | No cross-store dependencies |
 | **modal** | Leaf store | 🟢 Low | No cross-store dependencies |
+| **dashboard** | Leaf store | 🟢 Low | No store dependencies — safe to modify independently |
 
 ## Coordinator → Store Mapping
 
