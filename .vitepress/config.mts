@@ -57,6 +57,10 @@ export default withMermaid(
                                         text: 'Backend Architecture',
                                         link: '/en/architecture/backend',
                                     },
+                                    {
+                                        text: 'Performance Analysis',
+                                        link: '/en/architecture/performance-analysis',
+                                    },
                                 ],
                             },
                             {
@@ -187,6 +191,10 @@ export default withMermaid(
                                     {
                                         text: '后端架构参考',
                                         link: '/zh/architecture/backend',
+                                    },
+                                    {
+                                        text: '性能分析',
+                                        link: '/zh/architecture/performance-analysis',
                                     },
                                 ],
                             },
