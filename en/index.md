@@ -14,7 +14,7 @@ User persona × feature matrix, layout strategy, impact analysis template for ev
 
 ### Module Deep-Dives
 
-Friend system, Favorite system, Instance & Location, Dashboard system, Web Worker architecture, Refactoring directions — 6 module deep-dives
+Friend system, Favorite system, Instance & Location, Dashboard system, Status Bar, Web Worker architecture, Refactoring directions — 7 module deep-dives
 
 ### By the Numbers
 

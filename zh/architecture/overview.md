@@ -140,7 +140,7 @@ graph LR
     Nav --- Main --- Side
 
     subgraph BelowLayout["布局下方"]
-        StatusBar["StatusBar（条件显示）"]
+        StatusBar["StatusBar"]
     end
 
     subgraph Portals["弹窗传送门"]

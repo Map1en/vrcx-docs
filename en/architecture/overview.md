@@ -140,7 +140,7 @@ graph LR
     Nav --- Main --- Side
 
     subgraph BelowLayout["Below Layout"]
-        StatusBar["StatusBar (conditional)"]
+        StatusBar["StatusBar"]
     end
 
     subgraph Portals["Dialog Portals"]

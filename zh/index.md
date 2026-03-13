@@ -14,7 +14,7 @@
 
 ### 模块详解
 
-Friend 系统、Favorite 系统、Instance & Location、Dashboard 系统、Web Worker 架构、重构方向 6 个模块解析
+Friend 系统、Favorite 系统、Instance & Location、Dashboard 系统、状态栏、Web Worker 架构、重构方向 7 个模块解析
 
 ### 数据一览
 

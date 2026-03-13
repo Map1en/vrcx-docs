@@ -92,6 +92,10 @@ export default withMermaid(
                                         link: '/en/modules/dashboard-system',
                                     },
                                     {
+                                        text: 'Status Bar',
+                                        link: '/en/modules/status-bar',
+                                    },
+                                    {
                                         text: 'Web Worker Architecture',
                                         link: '/en/modules/web-worker',
                                     },
@@ -177,6 +181,10 @@ export default withMermaid(
                                     {
                                         text: '自定义仪表盘',
                                         link: '/zh/modules/dashboard-system',
+                                    },
+                                    {
+                                        text: '状态栏',
+                                        link: '/zh/modules/status-bar',
                                     },
                                     {
                                         text: 'Web Worker 架构',
