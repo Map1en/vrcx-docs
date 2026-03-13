@@ -80,6 +80,42 @@ export default withMermaid(
                                 text: 'Module Deep-Dives',
                                 items: [
                                     {
+                                        text: 'Auth System',
+                                        link: '/en/modules/auth-system',
+                                    },
+                                    {
+                                        text: 'User System',
+                                        link: '/en/modules/user-system',
+                                    },
+                                    {
+                                        text: 'Notification System',
+                                        link: '/en/modules/notification-system',
+                                    },
+                                    {
+                                        text: 'GameLog System',
+                                        link: '/en/modules/gamelog-system',
+                                    },
+                                    {
+                                        text: 'WebSocket Service',
+                                        link: '/en/modules/websocket-service',
+                                    },
+                                    {
+                                        text: 'Group System',
+                                        link: '/en/modules/group-system',
+                                    },
+                                    {
+                                        text: 'Search & Direct Access',
+                                        link: '/en/modules/search-system',
+                                    },
+                                    {
+                                        text: 'Feed System',
+                                        link: '/en/modules/feed-system',
+                                    },
+                                    {
+                                        text: 'Modal System',
+                                        link: '/en/modules/modal-system',
+                                    },
+                                    {
                                         text: 'Friend System',
                                         link: '/en/modules/friend-system',
                                     },
@@ -174,6 +210,42 @@ export default withMermaid(
                             {
                                 text: '模块详解',
                                 items: [
+                                    {
+                                        text: '认证系统',
+                                        link: '/zh/modules/auth-system',
+                                    },
+                                    {
+                                        text: '用户系统',
+                                        link: '/zh/modules/user-system',
+                                    },
+                                    {
+                                        text: '通知系统',
+                                        link: '/zh/modules/notification-system',
+                                    },
+                                    {
+                                        text: '游戏日志系统',
+                                        link: '/zh/modules/gamelog-system',
+                                    },
+                                    {
+                                        text: 'WebSocket 服务',
+                                        link: '/zh/modules/websocket-service',
+                                    },
+                                    {
+                                        text: '群组系统',
+                                        link: '/zh/modules/group-system',
+                                    },
+                                    {
+                                        text: '搜索与直接访问',
+                                        link: '/zh/modules/search-system',
+                                    },
+                                    {
+                                        text: 'Feed 系统',
+                                        link: '/zh/modules/feed-system',
+                                    },
+                                    {
+                                        text: 'Modal 系统',
+                                        link: '/zh/modules/modal-system',
+                                    },
                                     {
                                         text: 'Friend 系统',
                                         link: '/zh/modules/friend-system',
