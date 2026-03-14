@@ -66,6 +66,29 @@ sharedFeedStore.addEntry(noty);
 
 上面这种组合逻辑应迁移到 coordinator。
 
+### 模式 C：集中化副作用 Coordinator
+
+对于横切关注点（如搜索索引），用专用 coordinator 作为唯一写入网关：
+
+```js
+// coordinators/searchIndexCoordinator.js
+import { useSearchIndexStore } from '../stores/searchIndex';
+
+export function syncFriendSearchIndex(ctx) {
+    useSearchIndexStore().syncFriend(ctx);
+}
+```
+
+```js
+// coordinators/friendPresenceCoordinator.js
+// 业务 coordinator 调用集中 coordinator，而不是直接调用 store
+import { syncFriendSearchIndex } from './searchIndexCoordinator';
+
+syncFriendSearchIndex(ctx);
+```
+
+> **规则**：只有 `searchIndexCoordinator` 可以 import `useSearchIndexStore` 进行写操作。所有其他 coordinator、store 和 view 必须通过 `searchIndexCoordinator`。
+
 ## 边界判定速查
 
 1. 这个状态是谁“拥有”的？  
@@ -90,4 +113,5 @@ sharedFeedStore.addEntry(noty);
 | 新增通知类型 | `notification` store + `websocket` 入口 + 必要 coordinator |
 | 改登录后初始化行为 | `App.vue` + `auth/user/friendSync` 协调链 |
 | 改布局尺寸与持久化 | `MainLayout` + `useMainLayoutResizable` + appearance settings |
+| 新增可搜索实体类型 | `searchIndex` store + `searchIndexCoordinator` + 实体 coordinator |
 

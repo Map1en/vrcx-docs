@@ -33,7 +33,7 @@ graph TD
     end
 
     subgraph Layer2["Layer 2 — Business Logic"]
-        Coordinators["23 Coordinators"]
+        Coordinators["24 Coordinators"]
         Composables["6 Composables"]
     end
 
@@ -91,7 +91,7 @@ graph TD
 |----------|-------|---------|
 | UI Library (`components/ui/`) | ~200 files, 50+ types | Button, Dialog, DataTable, Tabs, Select, Popover, Sheet... |
 | Feature Dialogs (`components/dialogs/`) | 20+ | UserDialog (11 tabs), WorldDialog (4 tabs), GroupDialog (12+ tabs) |
-| Root Components | 17 | NavMenu, StatusBar, GlobalSearchDialog, Location, Timer... |
+| Root Components | 17 | NavMenu, StatusBar, QuickSearchDialog, Location, Timer... |
 
 ### Layer 3 — Pinia Stores (35+)
 
@@ -101,13 +101,13 @@ graph TD
 | **Features** | feed, favorite, search, gallery, invite, moderation |
 | **Real-time** | notification (complex), vrcStatus |
 | **Game** | game, gameLog (dir), launch |
-| **UI State** | ui, modal, globalSearch, sharedFeed, charts, dashboard |
+| **UI State** | ui, modal, quickSearch, sharedFeed, charts, dashboard |
 | **Settings** | settings/general, appearance, advanced, notifications, discordPresence, wristOverlay |
 | **System** | auth, updateLoop, vrcx, vrcxUpdater |
 | **Networking** | photon |
 | **VR** | vr |
 
-### Layer 2 — Coordinators (23)
+### Layer 2 — Coordinators (24)
 
 | Category | Coordinators |
 |----------|-------------|
@@ -117,7 +117,7 @@ graph TD
 | **Entity** | avatarCoordinator, worldCoordinator, groupCoordinator, instanceCoordinator |
 | **Feature** | favoriteCoordinator, inviteCoordinator, moderationCoordinator, memoCoordinator |
 | **Game** | gameCoordinator, gameLogCoordinator, locationCoordinator |
-| **System** | cacheCoordinator, imageUploadCoordinator, dateCoordinator, vrcxCoordinator |
+| **System** | cacheCoordinator, imageUploadCoordinator, dateCoordinator, vrcxCoordinator, searchIndexCoordinator |
 
 ### Layer 1 — API & Services
 
@@ -125,7 +125,7 @@ graph TD
 
 **Services**: request.js (HTTP + dedup), websocket.js (real-time events), sqlite.js (DB wrapper), config.js (key-value config), webapi.js (C# bridge), appConfig.js (debug flags), watchState.js (reactive flags), security.js, jsonStorage.js, confusables.js (confusable character detection), gameLog.js (game log parsing)
 
-**Web Workers**: searchWorker.js (global search — confusable-character normalization + locale-aware search offloaded to worker thread)
+**Web Workers**: quickSearchWorker.js (quick search — confusable-character normalization + locale-aware search offloaded to worker thread)
 
 ## Main Layout Structure
 

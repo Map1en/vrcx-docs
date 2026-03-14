@@ -290,43 +290,31 @@ for (const ctx of friendStore.friends.values()) {
 }
 ```
 
-新版 **全局搜索**（`globalSearch.js` + `searchWorker.js`）已使用 Web Worker，但顶栏的**快速搜索**仍在主线程运行。
+新版 **Quick Search**（`quickSearch.js` + `quickSearchWorker.js`）已使用 Web Worker，但顶栏的**快速搜索**仍在主线程运行。
 
-### 附加关注点 — globalSearch.js 的深度 watcher
+### 已缓解的关注点 — 索引更新触发
 
-`globalSearch.js` 第 169-203 行使用了 6 个 `deep: true` watcher：
+之前的 `globalSearch.js` 使用了 6 个 `deep: true` watcher 监听大型 reactive Map。这已被重构：
 
-```javascript
-// globalSearch.js — startIndexWatchers()
-watch(() => friendStore.friends, () => scheduleIndexUpdate(), { deep: true });
-watch(() => avatarStore.cachedAvatars, () => scheduleIndexUpdate(), { deep: true });
-watch(() => worldStore.cachedWorlds, () => scheduleIndexUpdate(), { deep: true });
-watch(() => groupStore.currentUserGroups, () => scheduleIndexUpdate(), { deep: true });
-watch(() => favoriteStore.favoriteAvatars, () => scheduleIndexUpdate(), { deep: true });
-watch(() => favoriteStore.favoriteWorlds, () => scheduleIndexUpdate(), { deep: true });
-```
+- **重构前**：深度监听 `friends`、`cachedAvatars`、`cachedWorlds`、`currentUserGroups`、`favoriteAvatars`、`favoriteWorlds` — Vue 内部对每次变更都执行深度遍历
+- **重构后**：`searchIndexStore` 使用递增的 `version` 计数器。`quickSearch.js` 仅监听这个标量 `version`（浅层，O(1)）。数据更新由 `searchIndexCoordinator` 在变更点推送，而非由 watcher 拉取。
 
-**缓解措施（已实现）：**
-- 通过 `effectScope` 包裹，仅在搜索面板打开时激活 watcher，关闭时销毁
-- 200ms debounce 合并频繁触发
-- 实际搜索逻辑已移至 Web Worker
-
-**残余问题：**
-- `deep: true` 对大型 reactive Map 仍会触发 Vue 内部的深度遍历（访问每个嵌套属性）
-- `sendIndexUpdate()` 在每次触发时遍历 6 个大型 Map，构建纯数据快照通过 `postMessage` **结构化克隆**发送到 worker
+**残余开销：**
+- `sendIndexUpdate()` 仍调用 `searchIndexStore.getSnapshot()` 遍历 6 个 Map 构建纯数据快照，通过 `postMessage` 结构化克隆发送到 worker
 - 序列化成本 O(friends + avatars + worlds + groups + favAvatars + favWorlds)，4000 好友时可达 MB 级
+- 缓解措施：仅在对话框打开时激活 + 200ms debounce
 
-### 严重性：🟡 中等
+### 严重性：🟢 低（重构后从中等降级）
 
-快速搜索有 debounce 且结果限制为 4 条，可见影响有限。但 4000 好友时，每次键入可能处理 4000 × `removeConfusables` 调用。globalSearch 的 deep watcher 虽已限制在打开时激活，但打开期间仍会因深层变化触发全量快照重建。
+快速搜索有 debounce 且结果限制为 4 条，可见影响有限。深度 watcher 的开销已被 version 计数器方案消除。
 
 ### 未来方向
 
-1. **将快速搜索合并到 Worker**：将快速搜索查询路由到现有的 `searchWorker`，而非在主线程上重复逻辑。
+1. **将快速搜索合并到 Worker**：将快速搜索查询路由到现有的 `quickSearchWorker`，而非在主线程上重复逻辑。
 
-2. **将深度 watcher 替换为定向变更追踪**：不深度监听整个 Map，而是监听特定的变更事件，只向 worker 发送增量更新（delta）。
+2. **增量更新**：不做全量快照重建，而是在 `version` 递增时只发送变更的条目到 worker。
 
-3. **懒序列化**：仅在 worker 索引过期时序列化数据，而非每次 Map 变化都全量重建。
+3. **懒序列化**：仅在 worker 索引过期时序列化数据，而非每次 version 变化都全量重建。
 
 ---
 
@@ -692,7 +680,7 @@ for (let index = 0; index < friendSnapshot.length; index += 1) {
 | **P1** | GameLog/通知 `LIKE '%x%'` | O(行数) 全扫描 | 🔴 关键 | ⭐⭐ 中等 |
 | **P1** | `notifications.js` SQL 注入 | 安全漏洞 | 🔴 关键 | ⭐ 简单 |
 | **P2** | 好友列表 5× 排序重算 | 5 × O(n log n) | 🟡 中等 | ⭐⭐ 中等 |
-| **P2** | globalSearch 深度 watcher 序列化 | O(全部数据) | 🟡 中等 | ⭐⭐ 中等 |
+| **P2** | quickSearch 快照序列化 | O(全部数据) | 🟢 低 | ⭐⭐ 中等（已部分缓解） |
 | **P2** | `getAllUserStats` 大 SQL IN 子句 | O(行数) + 巨大 SQL | 🟡 中等 | ⭐⭐ 中等 |
 | **P3** | Instance 缓存全量好友遍历 | O(friends) 每次 | 🟡 中等 | ⭐ 简单 |
 | **P3** | Instance 对话框 `some()` 去重 | O(k²) per dialog | 🟡 中等 | ⭐ 简单 |

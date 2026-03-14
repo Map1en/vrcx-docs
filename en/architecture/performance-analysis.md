@@ -290,43 +290,31 @@ for (const ctx of friendStore.friends.values()) {
 }
 ```
 
-While the new **Global Search** (`globalSearch.js` + `searchWorker.js`) uses a Web Worker, the **Quick Search** in the top bar still runs on the main thread.
+While the new **Quick Search** (`quickSearch.js` + `quickSearchWorker.js`) uses a Web Worker, the **Quick Search** in the top bar still runs on the main thread.
 
-### Additional Concern — Deep Watchers in globalSearch.js
+### Mitigated Concern — Index Update Triggering
 
-`globalSearch.js` lines 169-203 use 6 `deep: true` watchers:
+The previous `globalSearch.js` used 6 `deep: true` watchers on large reactive Maps. This has been refactored:
 
-```javascript
-// globalSearch.js — startIndexWatchers()
-watch(() => friendStore.friends, () => scheduleIndexUpdate(), { deep: true });
-watch(() => avatarStore.cachedAvatars, () => scheduleIndexUpdate(), { deep: true });
-watch(() => worldStore.cachedWorlds, () => scheduleIndexUpdate(), { deep: true });
-watch(() => groupStore.currentUserGroups, () => scheduleIndexUpdate(), { deep: true });
-watch(() => favoriteStore.favoriteAvatars, () => scheduleIndexUpdate(), { deep: true });
-watch(() => favoriteStore.favoriteWorlds, () => scheduleIndexUpdate(), { deep: true });
-```
+- **Before**: Deep watchers on `friends`, `cachedAvatars`, `cachedWorlds`, `currentUserGroups`, `favoriteAvatars`, `favoriteWorlds` — Vue's internal deep traversal on every mutation
+- **After**: `searchIndexStore` uses an incrementing `version` counter. `quickSearch.js` watches only this scalar `version` (shallow, O(1)). Data updates are pushed by `searchIndexCoordinator` at the point of mutation, not pulled by watchers.
 
-**Mitigations (already implemented):**
-- Wrapped in `effectScope`, watchers are only active when the search panel is open, destroyed on close
-- 200ms debounce merges frequent triggers
-- Actual search logic runs in a Web Worker
-
-**Remaining issues:**
-- `deep: true` on large reactive Maps still triggers Vue's internal deep traversal (visiting every nested property)
-- `sendIndexUpdate()` iterates all 6 large Maps on each trigger, building plain-data snapshots sent via `postMessage` **structured clone** to the worker
+**Remaining overhead:**
+- `sendIndexUpdate()` still calls `searchIndexStore.getSnapshot()` which iterates all 6 Maps to build plain-data snapshots sent via `postMessage` structured clone
 - Serialization cost is O(friends + avatars + worlds + groups + favAvatars + favWorlds), potentially MB-scale with 4000 friends
+- Mitigated by: only active while dialog is open + 200ms debounce
 
-### Severity: 🟡 Medium
+### Severity: 🟢 Low (downgraded from Medium after refactor)
 
-Quick Search is debounced and capped at 4 results, limiting the visible impact. But with 4000 friends, each keystroke may process 4000 × `removeConfusables` calls. globalSearch's deep watchers, while limited to when open, still trigger full snapshot rebuilds on any deep mutation while the panel is active.
+Quick Search is debounced and capped at 4 results, limiting the visible impact. The deep watcher overhead has been eliminated by the version-counter approach.
 
 ### Future Direction
 
-1. **Merge Quick Search into the Worker**: Route Quick Search queries through the existing `searchWorker` instead of duplicating logic on the main thread.
+1. **Merge Quick Search into the Worker**: Route Quick Search queries through the existing `quickSearchWorker` instead of duplicating logic on the main thread.
 
-2. **Replace deep watchers with targeted change tracking**: Instead of deep-watching entire Maps, listen to specific mutation events and only send delta updates to the worker.
+2. **Delta updates**: Instead of full snapshot rebuilds, send only changed entries to the worker when `version` increments.
 
-3. **Lazy serialization**: Only serialize data when the worker index is stale, rather than rebuilding on every Map mutation.
+3. **Lazy serialization**: Only serialize data when the worker index is stale, rather than rebuilding on every version change.
 
 ---
 
@@ -692,7 +680,7 @@ Does not block UI (async execution), but poor user experience — 4000 friends r
 | **P1** | GameLog/notification `LIKE '%x%'` | O(rows) full scan | 🔴 Critical | ⭐⭐ Medium |
 | **P1** | `notifications.js` SQL injection | Security | 🔴 Critical | ⭐ Easy |
 | **P2** | Friend list 5× sort recompute | 5 × O(n log n) | 🟡 Medium | ⭐⭐ Medium |
-| **P2** | globalSearch deep watcher serialization | O(all data) | 🟡 Medium | ⭐⭐ Medium |
+| **P2** | quickSearch snapshot serialization | O(all data) | 🟢 Low | ⭐⭐ Medium (partially mitigated) |
 | **P2** | `getAllUserStats` large SQL IN clause | O(rows) + massive SQL | 🟡 Medium | ⭐⭐ Medium |
 | **P3** | Instance cache full friend traversal | O(friends) per call | 🟡 Medium | ⭐ Easy |
 | **P3** | Instance dialog `some()` dedup | O(k²) per dialog | 🟡 Medium | ⭐ Easy |

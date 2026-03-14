@@ -5,7 +5,7 @@
 | Worker | Status | File |
 |--------|--------|------|
 | graphLayoutWorker | ✅ Implemented | `src/workers/graphLayoutWorker.js` |
-| searchWorker | ✅ Implemented | `src/workers/searchWorker.js` |
+| quickSearchWorker | ✅ Implemented | `src/stores/quickSearchWorker.js` |
 | Photon Worker | 📋 Planned | Waiting for `photon.js` rewrite |
 | Charts Worker | 📋 Optional | Not a persistent bottleneck |
 
@@ -35,7 +35,7 @@ sequenceDiagram
 | **Race Protection** | Uses `requestId` to prevent concurrent calls from overwriting results |
 | **Build Output** | ~82KB |
 
-### searchWorker (Global Search)
+### quickSearchWorker (Quick Search)
 
 **Problem**: `removeConfusables()` (Unicode normalization + Map lookups + regex) + `localeIncludes()` causes jank on every keystroke with 1000+ friends.
 
@@ -43,10 +43,10 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant Store as globalSearch.js
-    participant Worker as searchWorker
+    participant Store as quickSearch.js
+    participant Worker as quickSearchWorker
     
-    Note over Store: friends/avatars/worlds data changes
+    Note over Store: searchIndexStore.version changes
     Store->>Worker: { type: 'updateIndex', payload: { friends, avatars, ... } }
     
     Note over Store: User types query

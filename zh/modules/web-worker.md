@@ -5,7 +5,7 @@
 | Worker | 状态 | 文件 |
 |--------|------|------|
 | graphLayoutWorker | ✅ 已实现 | `src/workers/graphLayoutWorker.js` |
-| searchWorker | ✅ 已实现 | `src/workers/searchWorker.js` |
+| quickSearchWorker | ✅ 已实现 | `src/stores/quickSearchWorker.js` |
 | Photon Worker | 📋 待定 | 等 `photon.js` 重写时一并改造 |
 | Charts Worker | 📋 可选 | 非持续性瓶颈，优先级低 |
 
@@ -36,7 +36,7 @@ sequenceDiagram
 | **构建产物** | ~82KB |
 | **收益** | 布局计算完全后台化，主线程保持 60fps |
 
-### searchWorker（全局搜索）
+### quickSearchWorker（快速搜索）
 
 **问题**：`removeConfusables()`（Unicode 正规化 + Map 查找 + 正则替换）+ `localeIncludes()` 在好友 1000+ 时每次按键会卡顿。
 
@@ -44,10 +44,10 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant Store as globalSearch.js
-    participant Worker as searchWorker
+    participant Store as quickSearch.js
+    participant Worker as quickSearchWorker
     
-    Note over Store: friends/avatars/worlds 数据变化
+    Note over Store: searchIndexStore.version 变化
     Store->>Worker: { type: 'updateIndex', payload: { friends, avatars, ... } }
     
     Note over Store: 用户输入查询
@@ -60,7 +60,7 @@ sequenceDiagram
 |------|------|
 | **消息协议** | `updateIndex`（同步数据快照）+ `search`（执行搜索） |
 | **竞态防护** | 使用 `searchSeq` 递增计数器，过时结果被丢弃 |
-| **索引更新** | 通过 `watch` 监听 6 个数据源变化，200ms debounce 后发送 |
+| **索引更新** | 监听 `searchIndexStore.version`，200ms debounce 后发送快照 |
 | **内联依赖** | confusables 映射表内联到 Worker（避免引入非 Worker 安全的模块） |
 | **构建产物** | ~6KB |
 | **收益** | 搜索输入流畅，打字无卡顿 |

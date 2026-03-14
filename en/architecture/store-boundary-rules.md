@@ -66,6 +66,29 @@ sharedFeedStore.addEntry(noty);
 
 The above combined logic should be moved to a coordinator.
 
+### Pattern C: Centralized Side-Effect Coordinators
+
+For cross-cutting concerns (e.g. search indexing), a dedicated coordinator acts as the sole write gateway:
+
+```js
+// coordinators/searchIndexCoordinator.js
+import { useSearchIndexStore } from '../stores/searchIndex';
+
+export function syncFriendSearchIndex(ctx) {
+    useSearchIndexStore().syncFriend(ctx);
+}
+```
+
+```js
+// coordinators/friendPresenceCoordinator.js
+// Business coordinator calls the centralized coordinator, NOT the store directly
+import { syncFriendSearchIndex } from './searchIndexCoordinator';
+
+syncFriendSearchIndex(ctx);
+```
+
+> **Rule**: Only `searchIndexCoordinator` may import `useSearchIndexStore` for writes. All other coordinators, stores, and views must go through `searchIndexCoordinator`.
+
 ## Boundary Decision Quick Reference
 
 1. Who "owns" this state?  
@@ -90,3 +113,4 @@ Prefer view-local state or UI store.
 | Add new notification type | `notification` store + `websocket` entry + necessary coordinator |
 | Modify post-login initialization | `App.vue` + `auth/user/friendSync` coordination chain |
 | Change layout size & persistence | `MainLayout` + `useMainLayoutResizable` + appearance settings |
+| Add new searchable entity type | `searchIndex` store + `searchIndexCoordinator` + entity coordinator |

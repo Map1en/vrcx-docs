@@ -33,7 +33,7 @@ graph TD
     end
 
     subgraph Layer2["第 2 层 — 业务逻辑"]
-        Coordinators["23 个 Coordinator"]
+        Coordinators["24 个 Coordinator"]
         Composables["6 个 Composable"]
     end
 
@@ -91,7 +91,7 @@ graph TD
 |------|------|------|
 | UI 组件库 (`components/ui/`) | ~200 文件, 50+ 类型 | Button, Dialog, DataTable, Tabs, Select, Popover, Sheet... |
 | 功能弹窗 (`components/dialogs/`) | 20+ | UserDialog (11 标签页), WorldDialog (4 标签页), GroupDialog (12+ 标签页) |
-| 顶层组件 | 17 | NavMenu, StatusBar, GlobalSearchDialog, Location, Timer... |
+| 顶层组件 | 17 | NavMenu, StatusBar, QuickSearchDialog, Location, Timer... |
 
 ### 第 3 层 — Pinia Store（35+）
 
@@ -101,13 +101,13 @@ graph TD
 | **功能** | feed, favorite, search, gallery, invite, moderation |
 | **实时** | notification（复杂）, vrcStatus |
 | **游戏** | game, gameLog (目录), launch |
-| **UI 状态** | ui, modal, globalSearch, sharedFeed, charts, dashboard |
+| **UI 状态** | ui, modal, quickSearch, sharedFeed, charts, dashboard |
 | **设置** | settings/general, appearance, advanced, notifications, discordPresence, wristOverlay |
 | **系统** | auth, updateLoop, vrcx, vrcxUpdater |
 | **网络** | photon |
 | **VR** | vr |
 
-### 第 2 层 — Coordinator（23 个）
+### 第 2 层 — Coordinator（24 个）
 
 | 类别 | Coordinator |
 |------|------------|
@@ -117,7 +117,7 @@ graph TD
 | **实体** | avatarCoordinator, worldCoordinator, groupCoordinator, instanceCoordinator |
 | **功能** | favoriteCoordinator, inviteCoordinator, moderationCoordinator, memoCoordinator |
 | **游戏** | gameCoordinator, gameLogCoordinator, locationCoordinator |
-| **系统** | cacheCoordinator, imageUploadCoordinator, dateCoordinator, vrcxCoordinator |
+| **系统** | cacheCoordinator, imageUploadCoordinator, dateCoordinator, vrcxCoordinator, searchIndexCoordinator |
 
 ### 第 1 层 — API & 服务
 
@@ -125,7 +125,7 @@ graph TD
 
 **服务层**：request.js（HTTP + 去重）、websocket.js（实时事件）、sqlite.js（数据库封装）、config.js（键值配置）、webapi.js（C# 桥接）、appConfig.js（调试标志）、watchState.js（响应式标志）、security.js、jsonStorage.js、confusables.js（混淆字符检测）、gameLog.js（游戏日志解析）
 
-**Web Worker**：searchWorker.js（全局搜索——混淆字符归一化 + locale-aware 搜索卸载到 Worker 线程）
+**Web Worker**：quickSearchWorker.js（快速搜索——混淆字符归一化 + locale-aware 搜索卸载到 Worker 线程）
 
 ## 主布局结构
 

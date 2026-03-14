@@ -16,7 +16,7 @@ graph LR
     auth --> user
     friend --> user
     gameLog --> user
-    globalSearch --> user
+    quickSearch --> user
     instance --> user
     moderation --> user
     notification --> user
@@ -29,17 +29,17 @@ graph LR
     %% 依赖 friend 的 store
     feed --> friend
     gameLog --> friend
-    globalSearch --> friend
+    quickSearch --> friend
     instance --> friend
     search --> friend
     sharedFeed --> friend
     vr --> friend
 
-    %% globalSearch 的额外依赖（Web Worker 内使用）
-    globalSearch --> avatar
-    globalSearch --> world
-    globalSearch --> group
-    globalSearch --> favorite
+    %% quickSearch 的额外依赖（Web Worker 内使用）
+    quickSearch --> avatar
+    quickSearch --> world
+    quickSearch --> group
+    quickSearch --> favorite
 
     %% 依赖 instance 的 store
     gameLog --> instance

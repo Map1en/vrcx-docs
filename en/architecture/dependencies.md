@@ -16,7 +16,7 @@ graph LR
     auth --> user
     friend --> user
     gameLog --> user
-    globalSearch --> user
+    quickSearch --> user
     instance --> user
     moderation --> user
     notification --> user
@@ -29,17 +29,17 @@ graph LR
     %% Stores that depend on friend
     feed --> friend
     gameLog --> friend
-    globalSearch --> friend
+    quickSearch --> friend
     instance --> friend
     search --> friend
     sharedFeed --> friend
     vr --> friend
 
-    %% Additional globalSearch dependencies (via Web Worker)
-    globalSearch --> avatar
-    globalSearch --> world
-    globalSearch --> group
-    globalSearch --> favorite
+    %% Additional quickSearch dependencies (via Web Worker)
+    quickSearch --> avatar
+    quickSearch --> world
+    quickSearch --> group
+    quickSearch --> favorite
 
     %% Stores that depend on instance
     gameLog --> instance

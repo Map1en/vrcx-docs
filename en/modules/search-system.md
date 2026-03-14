@@ -2,13 +2,18 @@
 
 ## Overview
 
-VRCX has two search systems that serve different scopes: **Search Store** for VRC API-powered search and direct entity access, and **Global Search Store** for client-side fuzzy search across indexed local data via Web Worker.
+VRCX has two search systems that serve different scopes: **Search Store** for VRC API-powered search and direct entity access, and **Quick Search** for client-side fuzzy search across indexed local data via Web Worker.
 
 ```mermaid
 graph TB
     subgraph "Search Systems"
         SearchStore["searchStore<br/>(450 lines)"]
-        GlobalSearch["globalSearchStore<br/>(302 lines)"]
+        QuickSearch["quickSearchStore<br/>(237 lines)"]
+    end
+
+    subgraph "Data Layer"
+        SearchIndex["searchIndexStore<br/>(read-only index)"]
+        Coordinator["searchIndexCoordinator<br/>(write operations)"]
     end
 
     subgraph "Search Targets"
@@ -16,11 +21,14 @@ graph TB
         SearchStore -->|API| WorldSearch["World/Instance Lookup"]
         SearchStore -->|API| GroupSearch["Group Lookup"]
         SearchStore -->|API| AvatarSearch["Avatar Lookup"]
-        GlobalSearch -->|Worker| Friends["Friends Index"]
-        GlobalSearch -->|Worker| Avatars["Avatars Index"]
-        GlobalSearch -->|Worker| Worlds["Worlds Index"]
-        GlobalSearch -->|Worker| Groups["Groups Index"]
+        QuickSearch -->|Worker| Friends["Friends Index"]
+        QuickSearch -->|Worker| Avatars["Avatars Index"]
+        QuickSearch -->|Worker| Worlds["Worlds Index"]
+        QuickSearch -->|Worker| Groups["Groups Index"]
     end
+
+    Coordinator -->|write| SearchIndex
+    QuickSearch -->|read snapshot| SearchIndex
 ```
 
 ## Search Store (`searchStore`)
@@ -78,42 +86,95 @@ The `directAccessParse(input)` function is a universal entity resolver that pars
 
 `directAccessPaste()` reads from clipboard (platform-aware: Electron vs CEF), attempts to parse, and falls back to the omni-access dialog if parsing fails.
 
-## Global Search Store (`globalSearchStore`)
+## Search Index Architecture
+
+### Three-Layer Separation
+
+The search index uses a strict three-layer architecture:
+
+1. **`searchIndexStore`** — Pure data container holding indexed friends, avatars, worlds, groups, and favorites. Exposes read-only `getSnapshot()` for the Worker and a `version` counter for change tracking.
+2. **`searchIndexCoordinator`** — The **sole write entry point** for all search index mutations. No other coordinator, store, or view may call `useSearchIndexStore()` directly for writes.
+3. **`quickSearchStore`** — Consumes the index read-only via `getSnapshot()`, sends data to a Web Worker for off-thread search.
+
+### searchIndexCoordinator API
+
+| Function | Purpose |
+|----------|---------|
+| `syncFriendSearchIndex(ctx)` | Upsert friend into index |
+| `removeFriendSearchIndex(id)` | Remove friend from index |
+| `clearFriendSearchIndex()` | Clear all friends |
+| `syncAvatarSearchIndex(ref)` | Upsert avatar into index |
+| `removeAvatarSearchIndex(id)` | Remove avatar from index |
+| `clearAvatarSearchIndex()` | Clear all avatars |
+| `syncWorldSearchIndex(ref)` | Upsert world into index |
+| `removeWorldSearchIndex(id)` | Remove world from index |
+| `clearWorldSearchIndex()` | Clear all worlds |
+| `syncGroupSearchIndex(ref)` | Upsert group into index |
+| `removeGroupSearchIndex(id)` | Remove group from index |
+| `clearGroupSearchIndex()` | Clear all groups |
+| `rebuildFavoriteSearchIndex()` | Rebuild favorites from store |
+| `clearFavoriteSearchIndex()` | Clear all favorites |
+| `resetSearchIndexOnLogin()` | Watch `isLoggedIn`, clear all on transition |
+
+### Write Call Sites
+
+```mermaid
+graph LR
+    SIC["searchIndexCoordinator"]
+
+    FPC["friendPresenceCoordinator"] -->|syncFriend| SIC
+    FRC["friendRelationshipCoordinator"] -->|sync/remove Friend| SIC
+    FSC["friendSyncCoordinator"] -->|syncFriend bulk| SIC
+    AC["avatarCoordinator"] -->|sync/remove Avatar| SIC
+    WC["worldCoordinator"] -->|sync/remove World| SIC
+    GC["groupCoordinator"] -->|sync/remove/clear Group| SIC
+    FC["favoriteCoordinator"] -->|rebuild Favorite| SIC
+
+    SIC -->|write| SI["searchIndexStore"]
+```
+
+## Quick Search Store (`quickSearchStore`)
 
 ### Web Worker Architecture
 
 ```mermaid
 graph LR
-    Store["globalSearchStore"] -->|postMessage| Worker["searchWorker"]
+    Store["quickSearchStore"] -->|postMessage| Worker["quickSearchWorker"]
     Worker -->|postMessage| Store
 
     subgraph "Worker Operations"
-        Index["buildIndex()"]
+        Index["updateIndex()"]
         Search["search(query)"]
     end
 ```
 
-The global search uses a dedicated Web Worker to avoid blocking the UI thread:
+The quick search uses a dedicated Web Worker to avoid blocking the UI thread:
 
-1. **Index Building:** On login, sends all friends, avatars, worlds, and groups to the worker for indexing
+1. **Index Snapshot:** When the dialog opens, sends a full data snapshot to the worker via `searchIndexStore.getSnapshot()`
 2. **Search Execution:** Queries are sent to the worker, which returns ranked results
-3. **Re-indexing:** Triggered when data changes (new friends, updated favorites, etc.)
+3. **Re-indexing:** Triggered reactively when `searchIndexStore.version` changes while the dialog is open
 
 ### Search Categories
 
 | Category | Data Source | Indexed Fields |
 |----------|-----------|----------------|
 | Friends | `friendStore.friends` | displayName, memo, note |
-| Avatars | `avatarStore` + `favoriteStore` | name, authorName |
-| Worlds | `favoriteStore` | name, authorName |
-| Groups | `groupStore.currentUserGroups` | name, shortCode |
+| Own Avatars | `avatarStore` (filtered by authorId) | name |
+| Favorite Avatars | `favoriteStore` | name |
+| Own Worlds | `worldStore` (filtered by authorId) | name |
+| Favorite Worlds | `favoriteStore` | name |
+| Own Groups | `groupStore` (filtered by ownerId) | name |
+| Joined Groups | `groupStore.currentUserGroups` | name |
 
 ## File Map
 
 | File | Lines | Purpose |
 |------|-------|---------|
 | `stores/search.js` | 450 | Quick search, direct access, user search API |
-| `stores/globalSearch.js` | 302 | Worker-based global fuzzy search |
+| `stores/searchIndex.js` | ~260 | Search index data container |
+| `stores/quickSearch.js` | 237 | Worker-based quick search orchestration |
+| `stores/quickSearchWorker.js` | 373 | Web Worker: confusables, locale search |
+| `coordinators/searchIndexCoordinator.js` | 107 | Centralized search index write operations |
 
 ## Risks & Gotchas
 
@@ -121,3 +182,4 @@ The global search uses a dedicated Web Worker to avoid blocking the UI thread:
 - **`removeConfusables`** handles Unicode normalization but may miss new Unicode characters.
 - **Direct access parsing** uses regex and string prefix matching — some edge cases with malformed URLs may not parse correctly.
 - **The search worker** holds a complete copy of all indexed data in memory. This doubles the memory usage for friend data.
+- **Known architecture compromise**: `friend.js` and `user.js` still import `searchIndexCoordinator` directly (store → coordinator reverse dependency) for async memo/note loading callbacks.
