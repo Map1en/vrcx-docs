@@ -117,8 +117,16 @@ export default withMermaid(
                                 text: 'Optimization',
                                 items: [
                                     {
-                                        text: 'Performance Analysis',
+                                        text: 'Performance Overview',
                                         link: '/en/architecture/performance-analysis',
+                                    },
+                                    {
+                                        text: 'Frontend Performance',
+                                        link: '/en/architecture/performance-frontend',
+                                    },
+                                    {
+                                        text: 'Non-Frontend Performance',
+                                        link: '/en/architecture/performance-non-frontend',
                                     },
                                     {
                                         text: 'Web Worker Architecture',
@@ -263,8 +271,16 @@ export default withMermaid(
                                 text: '性能优化',
                                 items: [
                                     {
-                                        text: '性能分析',
+                                        text: '性能总览',
                                         link: '/zh/architecture/performance-analysis',
+                                    },
+                                    {
+                                        text: '前端性能',
+                                        link: '/zh/architecture/performance-frontend',
+                                    },
+                                    {
+                                        text: '非前端性能',
+                                        link: '/zh/architecture/performance-non-frontend',
                                     },
                                     {
                                         text: 'Web Worker 架构',
