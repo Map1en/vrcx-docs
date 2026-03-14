@@ -53,7 +53,8 @@ graph TD
 | **friendPresenceCoordinator** | runUpdateFriendFlow(), 170s 待离线机制, pendingOfflineWorker |
 | **friendSyncCoordinator** | runInitFriendsListFlow(), runRefreshFriendsListFlow() |
 | **friends Map** | ID → FriendContext |
-| **Computed 属性** | allFavoriteOnlineFriends, onlineFriends, activeFriends, offlineFriends, friendsInSameInstance |
+| **sortedFriends** | `shallowRef` — 全局预排序好友列表，增量维护 |
+| **Computed 属性** | vipFriends, onlineFriends, activeFriends, offlineFriends — 从 `sortedFriends` 过滤 |
 | **Sidebar** | 快速好友列表（VIP / 在线 / 活跃 / 离线） |
 | **FriendsLocations** | 卡片视图 + 虚拟滚动 |
 | **FriendList** | 数据表，搜索 + 批量操作 |
@@ -76,16 +77,77 @@ graph TD
 }
 ```
 
-## Friend Store Computed 属性
+## sortedFriends 排序架构
+
+不再由每个 `computed` 独立对完整的 `friends` Map 排序，store 维护一个全局预排序列表（`sortedFriends`，`shallowRef`）。所有派生 computed（`vipFriends`, `onlineFriends` 等）只**过滤**该列表 — 无需各自排序。
+
+### 工作原理
+
+```
+sortedFriends  (shallowRef, 增量维护)
+  ├── vipFriends       = sortedFriends.filter(online && isVIP)
+  ├── onlineFriends    = sortedFriends.filter(online && !isVIP)
+  ├── activeFriends    = sortedFriends.filter(active)
+  ├── offlineFriends   = sortedFriends.filter(offline)
+  └── friendsInSameInstance = sortedFriends.filter(online).groupBy(location)
+```
+
+### 增量维护
+
+| 操作 | 函数 | 机制 |
+|------|------|------|
+| **插入/重排** | `reindexSortedFriend(ctx)` | 删除已有 → 二分查找 → splice 插入 |
+| **删除** | `removeSortedFriend(id)` | 查找索引 → splice 删除 |
+| **全量重建** | `rebuildSortedFriends()` | `Array.from(friends.values()).sort(comparator)` |
+
+### 批处理模式
+
+在批量操作（登录好友同步、好友编号分配、互关计数加载）期间，单独的 `reindexSortedFriend()` 调用会触发 O(n²) 工作。批处理模式延迟所有更新：
+
+```
+runInSortedFriendsBatch(() => {
+    // 内部的 reindexSortedFriend() 调用只设置 pendingSortedFriendsRebuild = true
+    for (const friend of friends) {
+        applyUser(friend);
+        reindexSortedFriend(ctx);  // → 空操作，只标记脏位
+    }
+});
+// 批处理结束 → rebuildSortedFriends() → 单次全量排序
+```
+
+`sortedFriendsBatchDepth` 是计数器（非布尔值），支持嵌套批处理。
+
+### 重建触发器
+
+| 触发 | 机制 |
+|------|------|
+| 排序方式变更 | `watch(sidebarSortMethods)` → `rebuildSortedFriends()` |
+| 登录/登出 | `watch(isLoggedIn)` → `sortedFriends.value = []` |
+| 批处理结束 | `endSortedFriendsBatch()` → `rebuildSortedFriends()`（如果脏） |
+
+### `reindexSortedFriend()` 调用点
+
+| 位置 | 时机 |
+|------|------|
+| `friendStore.addFriend()` | 新好友加入 Map |
+| `friendPresenceCoordinator.runUpdateFriendFlow()` | 状态/位置/名称变更 |
+| `friendPresenceCoordinator.runUpdateFriendDelayedCheckFlow()` | 延迟检查后 VIP 状态变更 |
+| `userCoordinator.applyUser()` | 完整用户数据到达 |
+| `friendStore.setFriendNumber()` | 好友编号分配 |
+| `friendStore.getFriendLog()` → 批处理 | 好友日志数据加载 |
+| `friendStore.getAllUserMutualCount()` → 批处理 | 互关计数加载 |
+| `friendStore.updateSidebarFavorites()` → 批处理 | 收藏分组变更 |
+
+## Computed 属性
 
 | 属性 | 来源 | 用途 |
 |------|------|------|
 | `allFavoriteFriendIds` | favoriteStore + 本地收藏 + 设置 | Sidebar VIP 区域、过滤 |
-| `allFavoriteOnlineFriends` | 筛选 VIP + 在线的好友 | Sidebar VIP 列表 |
-| `onlineFriends` | 筛选在线、非 VIP 的好友 | Sidebar 在线列表 |
-| `activeFriends` | 筛选活跃状态的好友 | Sidebar 活跃列表 |
-| `offlineFriends` | 筛选离线/缺失的好友 | Sidebar 离线列表 |
-| `friendsInSameInstance` | 按共享实例分组的好友 | Sidebar 分组、FriendsLocations |
+| `allFavoriteOnlineFriends` | `sortedFriends` 筛选 VIP + 在线 | Sidebar VIP 列表 |
+| `onlineFriends` | `sortedFriends` 筛选在线、非 VIP | Sidebar 在线列表 |
+| `activeFriends` | `sortedFriends` 筛选活跃状态 | Sidebar 活跃列表 |
+| `offlineFriends` | `sortedFriends` 筛选离线/缺失 | Sidebar 离线列表 |
+| `friendsInSameInstance` | `sortedFriends` 按共享实例分组 | Sidebar 分组、FriendsLocations |
 
 ## 170 秒待离线机制
 
@@ -251,7 +313,7 @@ runDeleteFriendshipFlow(id)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
-| `stores/friend.js` | ~1350 | 好友状态、排序好友列表、computed 列表、好友日志 |
+| `stores/friend.js` | ~1400 | 好友状态、sortedFriends（shallowRef + 批处理）、computed 列表、好友日志 |
 | `coordinators/friendPresenceCoordinator.js` | ~315 | WebSocket 在线状态事件、170s 待离线机制 |
 | `coordinators/friendRelationshipCoordinator.js` | ~300 | 添加/删除好友关系、好友日志条目 |
 | `coordinators/friendSyncCoordinator.js` | ~200 | 初始加载、增量刷新、分页 |

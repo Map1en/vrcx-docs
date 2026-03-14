@@ -53,7 +53,8 @@ graph TD
 | **friendPresenceCoordinator** | runUpdateFriendFlow(), 170s pending offline, pendingOfflineWorker |
 | **friendSyncCoordinator** | runInitFriendsListFlow(), runRefreshFriendsListFlow() |
 | **friends Map** | ID → FriendContext |
-| **Computed Properties** | allFavoriteOnlineFriends, onlineFriends, activeFriends, offlineFriends, friendsInSameInstance |
+| **sortedFriends** | `shallowRef` — globally pre-sorted friend list, incrementally maintained |
+| **Computed Properties** | vipFriends, onlineFriends, activeFriends, offlineFriends — filter from `sortedFriends` |
 | **Sidebar** | Quick friend list (VIP / Online / Active / Offline) |
 | **FriendsLocations** | Card-based view + virtual scrolling |
 | **FriendList** | Data table, search + bulk ops |
@@ -76,16 +77,77 @@ Each friend in the `friends` Map has this shape:
 }
 ```
 
-## Friend Store Computed Properties
+## Sorted Friends Architecture
+
+Instead of each `computed` independently sorting the full `friends` Map, the store maintains a single globally pre-sorted list (`sortedFriends`) as a `shallowRef`. All derived computeds (`vipFriends`, `onlineFriends`, etc.) simply **filter** this list — no per-computed sorting.
+
+### How It Works
+
+```
+sortedFriends  (shallowRef, incrementally maintained)
+  ├── vipFriends       = sortedFriends.filter(online && isVIP)
+  ├── onlineFriends    = sortedFriends.filter(online && !isVIP)
+  ├── activeFriends    = sortedFriends.filter(active)
+  ├── offlineFriends   = sortedFriends.filter(offline)
+  └── friendsInSameInstance = sortedFriends.filter(online).groupBy(location)
+```
+
+### Incremental Maintenance
+
+| Operation | Function | Mechanism |
+|-----------|----------|-----------|
+| **Insert / Re-sort** | `reindexSortedFriend(ctx)` | Remove existing → binary search → splice insert |
+| **Remove** | `removeSortedFriend(id)` | Find index → splice remove |
+| **Full rebuild** | `rebuildSortedFriends()` | `Array.from(friends.values()).sort(comparator)` |
+
+### Batch Mode
+
+During bulk operations (login friend sync, friend order assignment, mutual count loading), individual `reindexSortedFriend()` calls would trigger O(n²) work. Batch mode defers all updates:
+
+```
+runInSortedFriendsBatch(() => {
+    // reindexSortedFriend() calls inside only set pendingSortedFriendsRebuild = true
+    for (const friend of friends) {
+        applyUser(friend);
+        reindexSortedFriend(ctx);  // → no-op, just marks dirty
+    }
+});
+// batch end → rebuildSortedFriends() → single full sort
+```
+
+`sortedFriendsBatchDepth` is a counter (not boolean) to support nested batches.
+
+### Rebuild Triggers
+
+| Trigger | Mechanism |
+|---------|-----------|
+| Sort method change | `watch(sidebarSortMethods)` → `rebuildSortedFriends()` |
+| Login/logout | `watch(isLoggedIn)` → `sortedFriends.value = []` |
+| Batch end | `endSortedFriendsBatch()` → `rebuildSortedFriends()` (if dirty) |
+
+### Call Sites for `reindexSortedFriend()`
+
+| Location | When |
+|----------|------|
+| `friendStore.addFriend()` | New friend added to Map |
+| `friendPresenceCoordinator.runUpdateFriendFlow()` | Status/location/name change |
+| `friendPresenceCoordinator.runUpdateFriendDelayedCheckFlow()` | VIP status change after delayed check |
+| `userCoordinator.applyUser()` | Full user data arrives |
+| `friendStore.setFriendNumber()` | Friend number assigned |
+| `friendStore.getFriendLog()` → batch | Friend log data loaded |
+| `friendStore.getAllUserMutualCount()` → batch | Mutual counts loaded |
+| `friendStore.updateSidebarFavorites()` → batch | Favorite group changes |
+
+## Computed Properties
 
 | Property | Source | When Used |
 |----------|--------|-----------|
 | `allFavoriteFriendIds` | favoriteStore + localFavorites + settings | Sidebar VIP section, filtering |
-| `allFavoriteOnlineFriends` | friends filtered by VIP + online | Sidebar VIP list |
-| `onlineFriends` | friends filtered by online, not VIP | Sidebar online list |
-| `activeFriends` | friends filtered by active state | Sidebar active list |
-| `offlineFriends` | friends filtered by offline/missing | Sidebar offline list |
-| `friendsInSameInstance` | friends grouped by shared instance | Sidebar grouping, FriendsLocations |
+| `allFavoriteOnlineFriends` | `sortedFriends` filtered by VIP + online | Sidebar VIP list |
+| `onlineFriends` | `sortedFriends` filtered by online, not VIP | Sidebar online list |
+| `activeFriends` | `sortedFriends` filtered by active state | Sidebar active list |
+| `offlineFriends` | `sortedFriends` filtered by offline/missing | Sidebar offline list |
+| `friendsInSameInstance` | `sortedFriends` grouped by shared instance | Sidebar grouping, FriendsLocations |
 
 ## 170-Second Pending Offline Mechanism
 
@@ -251,7 +313,7 @@ runDeleteFriendshipFlow(id)
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `stores/friend.js` | ~1350 | Friend state, sorted friends, computed lists, friend log |
+| `stores/friend.js` | ~1400 | Friend state, sortedFriends (shallowRef + batch), computed lists, friend log |
 | `coordinators/friendPresenceCoordinator.js` | ~315 | WebSocket presence events, 170s pending offline |
 | `coordinators/friendRelationshipCoordinator.js` | ~300 | Add/remove friendship, friend log entries |
 | `coordinators/friendSyncCoordinator.js` | ~200 | Initial load, incremental refresh, pagination |
