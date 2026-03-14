@@ -1,7 +1,5 @@
 # Feed System
 
-## Overview
-
 VRCX has two feed systems that serve different scopes: **Feed Store** for historical social event viewing, and **Shared Feed Store** for real-time event aggregation across the dashboard, VR overlay, and notification center.
 
 ```mermaid
@@ -26,6 +24,9 @@ graph TB
         SharedFeed --> FeedPage
     end
 ```
+
+## Overview
+
 
 ## Feed Store (`feedStore`)
 

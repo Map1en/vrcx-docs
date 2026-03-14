@@ -1,7 +1,5 @@
 # 通知系统
 
-## 概述
-
 通知系统是 VRCX 中最复杂的单一 store（1496 行）。它处理来自 VRChat 的所有通知类型 — 好友请求、邀请、邀请请求、投票踢人、实例关闭 — 并将它们桥接到桌面通知、声音提醒、VR 叠层提醒和应用内通知中心。拥有 15 个依赖 store，是代码库中依赖数量最多、影响范围最广的系统。
 
 ```mermaid
@@ -42,6 +40,9 @@ graph TB
     NotifStore --> GameStore
     NotifStore --> InstanceStore
 ```
+
+## 概览
+
 
 ## 通知类型
 

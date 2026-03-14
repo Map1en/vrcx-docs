@@ -2,8 +2,6 @@
 
 Friend 系统是 VRCX 中最复杂的子系统，跨越 1 个 Store、3 个 Coordinator 和 4 个主要视图。
 
-## 系统概览
-
 ```mermaid
 graph TD
     subgraph External["外部"]
@@ -43,6 +41,8 @@ graph TD
     presence --> db
     sync --> db
 ```
+
+## 概览
 
 | 组件 | 职责 |
 |------|------|
@@ -246,3 +246,20 @@ runDeleteFriendshipFlow(id)
 **事件类型**：Friend, Unfriend, FriendRequest, CancelFriendRequest, DisplayName, TrustLevel
 
 **列**：日期、类型、显示名、之前的名字、信任等级、好友编号
+
+## 文件清单
+
+| 文件 | 行数 | 职责 |
+|------|------|------|
+| `stores/friend.js` | ~1350 | 好友状态、排序好友列表、computed 列表、好友日志 |
+| `coordinators/friendPresenceCoordinator.js` | ~315 | WebSocket 在线状态事件、170s 待离线机制 |
+| `coordinators/friendRelationshipCoordinator.js` | ~300 | 添加/删除好友关系、好友日志条目 |
+| `coordinators/friendSyncCoordinator.js` | ~200 | 初始加载、增量刷新、分页 |
+
+## 风险与注意事项
+
+- **`sortedFriends` 是 `shallowRef`**，而非 `computed`。通过二分插入（`reindexSortedFriend`）和 splice 删除（`removeSortedFriend`）增量维护。仅在排序方式变更或登录状态转换时全量重建。
+- **批处理操作**（`beginSortedFriendsBatch` / `endSortedFriendsBatch`）在批量好友列表刷新期间延迟排序更新。忘记调用 `endSortedFriendsBatch` 会静默抑制所有排序更新，直到下次重建。
+- **170s 待离线**是时序最敏感的代码路径。1s 心跳 worker 和传入的 WebSocket 事件之间的竞态条件如果处理不当可能导致过期状态。
+- **`friendsInSameInstance`** 现在遍历 `sortedFriends`（已排序）而非拼接 `vipFriends + onlineFriends`，因此分组排序与侧边栏排序一致，无需重新排序。
+- **已知架构妥协**：`friend.js` 直接导入 `searchIndexCoordinator`（store → coordinator 反向依赖），用于异步备注/笔记加载回调。

@@ -1,6 +1,7 @@
-# Instance & Location
+# Instance & Location System
 
-## System Overview
+The Instance & Location System tracks the current user's position in VRChat worlds and manages cached instance data for friends and other players.
+
 
 ```mermaid
 graph TD
@@ -38,6 +39,8 @@ graph TD
     locationStore --> Views
     instanceStore --> Views
 ```
+
+## Overview
 
 | Component | Details |
 |-----------|--------|

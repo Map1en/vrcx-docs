@@ -1,7 +1,5 @@
 # Search & Direct Access
 
-## Overview
-
 VRCX has two search systems that serve different scopes: **Search Store** for VRC API-powered search and direct entity access, and **Quick Search** for client-side fuzzy search across indexed local data via Web Worker.
 
 ```mermaid
@@ -30,6 +28,9 @@ graph TB
     Coordinator -->|write| SearchIndex
     QuickSearch -->|read snapshot| SearchIndex
 ```
+
+## Overview
+
 
 ## Search Store (`searchStore`)
 

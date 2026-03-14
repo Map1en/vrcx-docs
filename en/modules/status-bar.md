@@ -1,8 +1,4 @@
-# Status Bar
-
-## Current Status: ✅ Implemented (2026-03-13)
-
-## Overview
+# Status Bar System
 
 The Status Bar is a fixed 22px strip at the bottom of the application, providing at-a-glance system status, game session tracking, and configurable timezone clocks.
 
@@ -39,6 +35,8 @@ graph LR
     config --> Clocks
     config --> gameStore
 ```
+
+## Overview
 
 ## Indicators
 

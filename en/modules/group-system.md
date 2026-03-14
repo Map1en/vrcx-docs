@@ -1,7 +1,5 @@
 # Group System
 
-## Overview
-
 The Group System manages VRChat group data, including group dialogs, member management, moderation, and group instances. It is split between a store (state + simple UI logic) and a coordinator (complex cross-store operations), following the standard VRCX separation pattern.
 
 ```mermaid
@@ -28,6 +26,9 @@ graph TB
     GroupCoord --> QueryRequest
     GroupCoord --> GroupAPI
 ```
+
+## Overview
+
 
 ## State Shape
 

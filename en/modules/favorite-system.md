@@ -1,6 +1,7 @@
 # Favorite System
 
-## System Overview
+The Favorite System manages VRChat favorites (friends, worlds, avatars) across remote API groups and local-only VRCX groups.
+
 
 ```mermaid
 graph TD
@@ -35,6 +36,8 @@ graph TD
     Store --> Views
     Store --> Consumers
 ```
+
+## Overview
 
 ## Favorite Types
 
@@ -136,7 +139,21 @@ Data table with avatar details:
 - "Switch to" button
 - Remove from favorites
 
-## Key Dependencies
+## File Map
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `stores/favorite.js` | ~400 | Favorite state, groups, cached favorites |
+| `coordinators/favoriteCoordinator.js` | ~350 | Add/remove/move favorites, group operations |
+| `api/favorite.js` | ~80 | VRChat favorites API wrapper |
+
+## Risks & Gotchas
+
+- **Remote vs local favorites** are merged in `allFavoriteFriendIds`. Forgetting either source will cause VIP friends to disappear from the sidebar.
+- **Favorite group ordering** affects sidebar VIP section display order. The sidebar settings popover controls which groups are visible.
+- **`updateSidebarFavorites()`** triggers `reindexSortedFriend` for every affected friend — uses batch mode to defer the sort until all changes are applied.
+
+### Key Dependencies
 
 | Module | How It Uses Favorites |
 |--------|----------------------|

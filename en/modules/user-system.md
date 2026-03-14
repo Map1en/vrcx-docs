@@ -1,7 +1,5 @@
 # User System
 
-## Overview
-
 The User System is the **central hub** of the VRCX data model. It manages the current user's state, cached user references for all known users, the user dialog (an 11-tab user detail popup), and user-related coordinators that bridge API responses into reactive state. With 13 direct dependents, changes to the User System have the highest blast radius of any store in the codebase.
 
 ```mermaid
@@ -38,6 +36,9 @@ graph TB
     UserStore -.-> FriendCoord
     UserStore -.-> LocationCoord
 ```
+
+## Overview
+
 
 ## State Shape
 

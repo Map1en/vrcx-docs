@@ -2,8 +2,6 @@
 
 The Friend system is the most complex subsystem in VRCX, spanning 1 store, 3 coordinators, and 4 major views.
 
-## System Overview
-
 ```mermaid
 graph TD
     subgraph External
@@ -43,6 +41,8 @@ graph TD
     presence --> db
     sync --> db
 ```
+
+## Overview
 
 | Component | Details |
 |-----------|--------|
@@ -246,3 +246,20 @@ runDeleteFriendshipFlow(id)
 **Event Types**: Friend, Unfriend, FriendRequest, CancelFriendRequest, DisplayName, TrustLevel
 
 **Columns**: Date, type, display name, previous name, trust level, friend number
+
+## File Map
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `stores/friend.js` | ~1350 | Friend state, sorted friends, computed lists, friend log |
+| `coordinators/friendPresenceCoordinator.js` | ~315 | WebSocket presence events, 170s pending offline |
+| `coordinators/friendRelationshipCoordinator.js` | ~300 | Add/remove friendship, friend log entries |
+| `coordinators/friendSyncCoordinator.js` | ~200 | Initial load, incremental refresh, pagination |
+
+## Risks & Gotchas
+
+- **`sortedFriends` is a `shallowRef`**, not a `computed`. It is incrementally maintained via binary-insert (`reindexSortedFriend`) and splice-remove (`removeSortedFriend`). Full rebuilds only happen on sort method changes or login state transitions.
+- **Batch operations** (`beginSortedFriendsBatch` / `endSortedFriendsBatch`) defer sort updates during bulk friend list refreshes. Forgetting `endSortedFriendsBatch` will silently suppress all sort updates until the next rebuild.
+- **170s pending offline** is the most timing-sensitive code path. Race conditions between the 1s tick worker and incoming WebSocket events can cause stale state if not handled carefully.
+- **`friendsInSameInstance`** now iterates `sortedFriends` (already sorted) instead of concatenating `vipFriends + onlineFriends`, so group ordering matches sidebar order without re-sorting.
+- **Known architecture compromise**: `friend.js` imports `searchIndexCoordinator` directly (store → coordinator reverse dependency) for async memo/note loading callbacks.

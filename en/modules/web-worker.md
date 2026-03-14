@@ -1,6 +1,8 @@
 # Web Worker Architecture
 
-## Current Status
+The Web Worker system offloads CPU-intensive computations (graph layout, fuzzy search) to dedicated worker threads to prevent UI blocking.
+
+## Overview
 
 | Worker | Status | File |
 |--------|--------|------|

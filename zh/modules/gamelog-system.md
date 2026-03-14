@@ -1,7 +1,5 @@
 # 游戏日志系统
 
-## 概述
-
 游戏日志系统处理 VRChat 的本地游戏日志文件，追踪玩家交互、实例切换、媒体播放和游戏内事件。它是 VRCX 了解"游戏内正在发生什么"的主要来源 — 用客户端观察数据补充 WebSocket 实时数据，获取 VRChat API 不暴露的信息。
 
 ```mermaid
@@ -38,6 +36,9 @@ graph TB
     GameLogStore --> GameLogView
     GameLogStore --> Dashboard
 ```
+
+## 概览
+
 
 ## 事件类型
 

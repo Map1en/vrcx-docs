@@ -1,7 +1,5 @@
 # Feed 系统
 
-## 概述
-
 VRCX 有两个 feed 系统：**Feed Store** 用于历史社交事件查看，**Shared Feed Store** 用于跨仪表盘、VR 叠层和通知中心的实时事件聚合。
 
 ```mermaid
@@ -26,6 +24,9 @@ graph TB
         SharedFeed --> FeedPage
     end
 ```
+
+## 概览
+
 
 ## Feed Store
 

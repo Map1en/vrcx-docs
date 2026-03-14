@@ -1,7 +1,5 @@
 # 群组系统
 
-## 概述
-
 群组系统管理 VRChat 的群组数据，包括群组对话框、成员管理、审核和群组实例。它分为 store（状态 + 简单 UI 逻辑）和 coordinator（复杂的跨 store 操作），遵循标准的 VRCX 分离模式。
 
 ```mermaid
@@ -26,6 +24,9 @@ graph TB
     GroupCoord --> VRStore
     GroupCoord --> GroupAPI
 ```
+
+## 概览
+
 
 ## 状态结构
 

@@ -1,7 +1,5 @@
 # Modal System
 
-## Overview
-
 The Modal System provides a centralized, promise-based dialog API for confirmations, alerts, text prompts, and OTP input. It replaces the need for scattered dialog state across stores — any store or coordinator can `await modalStore.confirm(...)` to get user input.
 
 ```mermaid
@@ -39,6 +37,9 @@ graph TB
     Search --> Prompt
     GameLog --> Confirm
 ```
+
+## Overview
+
 
 ## API
 

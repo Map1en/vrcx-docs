@@ -1,7 +1,5 @@
 # GameLog System
 
-## Overview
-
 The GameLog System processes VRChat's local game log file to track player interactions, instance transitions, media playback, and in-game events. It serves as VRCX's primary source of "what's happening right now in the game" — complementing the WebSocket-based real-time data with client-side observation data that VRChat's API doesn't expose.
 
 ```mermaid
@@ -38,6 +36,9 @@ graph TB
     GameLogStore --> GameLogView
     GameLogStore --> Dashboard
 ```
+
+## Overview
+
 
 ## Event Types
 

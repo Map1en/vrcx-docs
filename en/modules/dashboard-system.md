@@ -1,8 +1,6 @@
 # Dashboard System
 
-## Current Status: ✅ Base version implemented (2026-03-13)
-
-## System Overview
+The Dashboard System provides customizable, multi-panel layouts where users can compose widgets and full-page views into personalized dashboards.
 
 ```mermaid
 graph TD
@@ -42,6 +40,8 @@ graph TD
     panel --> row
     row --> dash
 ```
+
+## Overview
 
 ## Data Structure
 

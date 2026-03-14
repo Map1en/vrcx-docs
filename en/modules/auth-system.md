@@ -1,7 +1,5 @@
 # Auth System
 
-## Overview
-
 The Auth System manages the full authentication lifecycle for VRCX, including manual login, auto-login, credential persistence, two-factor authentication (2FA), primary password encryption, and logout. It is the first system that activates on app launch and gates all other subsystems behind `watchState.isLoggedIn`.
 
 ```mermaid
@@ -33,6 +31,9 @@ graph TB
     AuthStore --> Security
     AuthStore --> WebApi
 ```
+
+## Overview
+
 
 ## State Shape
 

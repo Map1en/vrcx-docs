@@ -1,7 +1,5 @@
 # Modal 系统
 
-## 概述
-
 Modal 系统提供集中化的、基于 Promise 的对话框 API，用于确认、提醒、文本输入和 OTP 输入。它替代了分散在各 store 中的对话框状态 — 任何 store 或 coordinator 都可以 `await modalStore.confirm(...)` 来获取用户输入。
 
 ```mermaid
@@ -39,6 +37,9 @@ graph TB
     Search --> Prompt
     GameLog --> Confirm
 ```
+
+## 概览
+
 
 ## API
 

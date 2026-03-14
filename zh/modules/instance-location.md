@@ -1,6 +1,7 @@
-# Instance & Location
+# Instance & Location 系统
 
-## 系统概览
+Instance & Location 系统跟踪当前用户在 VRChat 世界中的位置，并管理好友和其他玩家的缓存实例数据。
+
 
 ```mermaid
 graph TD
@@ -38,6 +39,8 @@ graph TD
     locationStore --> Views
     instanceStore --> Views
 ```
+
+## 概览
 
 | 组件 | 说明 |
 |------|------|

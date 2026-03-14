@@ -46,20 +46,100 @@ export default withMermaid(
                                         link: '/en/architecture/dependencies',
                                     },
                                     {
-                                        text: 'Change Entry Map',
-                                        link: '/en/architecture/change-entry-map',
+                                        text: 'Backend Architecture',
+                                        link: '/en/architecture/backend',
                                     },
+                                ],
+                            },
+                            {
+                                text: 'Feature Modules',
+                                collapsed: false,
+                                items: [
+                                    {
+                                        text: 'Auth System',
+                                        link: '/en/modules/auth-system',
+                                    },
+                                    {
+                                        text: 'User System',
+                                        link: '/en/modules/user-system',
+                                    },
+                                    {
+                                        text: 'Friend System',
+                                        link: '/en/modules/friend-system',
+                                    },
+                                    {
+                                        text: 'Notification System',
+                                        link: '/en/modules/notification-system',
+                                    },
+                                    {
+                                        text: 'Group System',
+                                        link: '/en/modules/group-system',
+                                    },
+                                    {
+                                        text: 'Favorite System',
+                                        link: '/en/modules/favorite-system',
+                                    },
+                                    {
+                                        text: 'Instance & Location',
+                                        link: '/en/modules/instance-location',
+                                    },
+                                    {
+                                        text: 'Search & Direct Access',
+                                        link: '/en/modules/search-system',
+                                    },
+                                    {
+                                        text: 'Feed System',
+                                        link: '/en/modules/feed-system',
+                                    },
+                                    {
+                                        text: 'GameLog System',
+                                        link: '/en/modules/gamelog-system',
+                                    },
+                                    {
+                                        text: 'WebSocket Service',
+                                        link: '/en/modules/websocket-service',
+                                    },
+                                    {
+                                        text: 'Modal System',
+                                        link: '/en/modules/modal-system',
+                                    },
+                                    {
+                                        text: 'Dashboard System',
+                                        link: '/en/modules/dashboard-system',
+                                    },
+                                    {
+                                        text: 'Status Bar',
+                                        link: '/en/modules/status-bar',
+                                    },
+                                ],
+                            },
+                            {
+                                text: 'Optimization',
+                                items: [
+                                    {
+                                        text: 'Performance Analysis',
+                                        link: '/en/architecture/performance-analysis',
+                                    },
+                                    {
+                                        text: 'Web Worker Architecture',
+                                        link: '/en/modules/web-worker',
+                                    },
+                                ],
+                            },
+                            {
+                                text: 'Engineering',
+                                items: [
                                     {
                                         text: 'Store Boundary Rules',
                                         link: '/en/architecture/store-boundary-rules',
                                     },
                                     {
-                                        text: 'Backend Architecture',
-                                        link: '/en/architecture/backend',
+                                        text: 'Change Entry Map',
+                                        link: '/en/architecture/change-entry-map',
                                     },
                                     {
-                                        text: 'Performance Analysis',
-                                        link: '/en/architecture/performance-analysis',
+                                        text: 'Refactoring Directions',
+                                        link: '/en/modules/refactoring-directions',
                                     },
                                 ],
                             },
@@ -77,75 +157,6 @@ export default withMermaid(
                                     {
                                         text: 'Impact Analysis Template',
                                         link: '/en/decision/impact-template',
-                                    },
-                                ],
-                            },
-                            {
-                                text: 'Module Deep-Dives',
-                                items: [
-                                    {
-                                        text: 'Auth System',
-                                        link: '/en/modules/auth-system',
-                                    },
-                                    {
-                                        text: 'User System',
-                                        link: '/en/modules/user-system',
-                                    },
-                                    {
-                                        text: 'Notification System',
-                                        link: '/en/modules/notification-system',
-                                    },
-                                    {
-                                        text: 'GameLog System',
-                                        link: '/en/modules/gamelog-system',
-                                    },
-                                    {
-                                        text: 'WebSocket Service',
-                                        link: '/en/modules/websocket-service',
-                                    },
-                                    {
-                                        text: 'Group System',
-                                        link: '/en/modules/group-system',
-                                    },
-                                    {
-                                        text: 'Search & Direct Access',
-                                        link: '/en/modules/search-system',
-                                    },
-                                    {
-                                        text: 'Feed System',
-                                        link: '/en/modules/feed-system',
-                                    },
-                                    {
-                                        text: 'Modal System',
-                                        link: '/en/modules/modal-system',
-                                    },
-                                    {
-                                        text: 'Friend System',
-                                        link: '/en/modules/friend-system',
-                                    },
-                                    {
-                                        text: 'Favorite System',
-                                        link: '/en/modules/favorite-system',
-                                    },
-                                    {
-                                        text: 'Instance & Location',
-                                        link: '/en/modules/instance-location',
-                                    },
-                                    {
-                                        text: 'Dashboard System',
-                                        link: '/en/modules/dashboard-system',
-                                    },
-                                    {
-                                        text: 'Status Bar',
-                                        link: '/en/modules/status-bar',
-                                    },
-                                    {
-                                        text: 'Web Worker Architecture',
-                                        link: '/en/modules/web-worker',
-                                    },
-                                    {
-                                        text: 'Refactoring Directions',
-                                        link: '/en/modules/refactoring-directions',
                                     },
                                 ],
                             },
@@ -181,20 +192,100 @@ export default withMermaid(
                                         link: '/zh/architecture/dependencies',
                                     },
                                     {
-                                        text: '前端改动入口地图',
-                                        link: '/zh/architecture/change-entry-map',
+                                        text: '后端架构参考',
+                                        link: '/zh/architecture/backend',
                                     },
+                                ],
+                            },
+                            {
+                                text: '功能模块',
+                                collapsed: false,
+                                items: [
+                                    {
+                                        text: '认证系统',
+                                        link: '/zh/modules/auth-system',
+                                    },
+                                    {
+                                        text: '用户系统',
+                                        link: '/zh/modules/user-system',
+                                    },
+                                    {
+                                        text: 'Friend 系统',
+                                        link: '/zh/modules/friend-system',
+                                    },
+                                    {
+                                        text: '通知系统',
+                                        link: '/zh/modules/notification-system',
+                                    },
+                                    {
+                                        text: '群组系统',
+                                        link: '/zh/modules/group-system',
+                                    },
+                                    {
+                                        text: 'Favorite 系统',
+                                        link: '/zh/modules/favorite-system',
+                                    },
+                                    {
+                                        text: 'Instance & Location',
+                                        link: '/zh/modules/instance-location',
+                                    },
+                                    {
+                                        text: '搜索与直接访问',
+                                        link: '/zh/modules/search-system',
+                                    },
+                                    {
+                                        text: 'Feed 系统',
+                                        link: '/zh/modules/feed-system',
+                                    },
+                                    {
+                                        text: '游戏日志系统',
+                                        link: '/zh/modules/gamelog-system',
+                                    },
+                                    {
+                                        text: 'WebSocket 服务',
+                                        link: '/zh/modules/websocket-service',
+                                    },
+                                    {
+                                        text: 'Modal 系统',
+                                        link: '/zh/modules/modal-system',
+                                    },
+                                    {
+                                        text: '自定义仪表盘',
+                                        link: '/zh/modules/dashboard-system',
+                                    },
+                                    {
+                                        text: '状态栏',
+                                        link: '/zh/modules/status-bar',
+                                    },
+                                ],
+                            },
+                            {
+                                text: '性能优化',
+                                items: [
+                                    {
+                                        text: '性能分析',
+                                        link: '/zh/architecture/performance-analysis',
+                                    },
+                                    {
+                                        text: 'Web Worker 架构',
+                                        link: '/zh/modules/web-worker',
+                                    },
+                                ],
+                            },
+                            {
+                                text: '工程化',
+                                items: [
                                     {
                                         text: 'Store 边界规则',
                                         link: '/zh/architecture/store-boundary-rules',
                                     },
                                     {
-                                        text: '后端架构参考',
-                                        link: '/zh/architecture/backend',
+                                        text: '前端改动入口地图',
+                                        link: '/zh/architecture/change-entry-map',
                                     },
                                     {
-                                        text: '性能分析',
-                                        link: '/zh/architecture/performance-analysis',
+                                        text: '重构方向与进度',
+                                        link: '/zh/modules/refactoring-directions',
                                     },
                                 ],
                             },
@@ -212,75 +303,6 @@ export default withMermaid(
                                     {
                                         text: '影响分析模板',
                                         link: '/zh/decision/impact-template',
-                                    },
-                                ],
-                            },
-                            {
-                                text: '模块详解',
-                                items: [
-                                    {
-                                        text: '认证系统',
-                                        link: '/zh/modules/auth-system',
-                                    },
-                                    {
-                                        text: '用户系统',
-                                        link: '/zh/modules/user-system',
-                                    },
-                                    {
-                                        text: '通知系统',
-                                        link: '/zh/modules/notification-system',
-                                    },
-                                    {
-                                        text: '游戏日志系统',
-                                        link: '/zh/modules/gamelog-system',
-                                    },
-                                    {
-                                        text: 'WebSocket 服务',
-                                        link: '/zh/modules/websocket-service',
-                                    },
-                                    {
-                                        text: '群组系统',
-                                        link: '/zh/modules/group-system',
-                                    },
-                                    {
-                                        text: '搜索与直接访问',
-                                        link: '/zh/modules/search-system',
-                                    },
-                                    {
-                                        text: 'Feed 系统',
-                                        link: '/zh/modules/feed-system',
-                                    },
-                                    {
-                                        text: 'Modal 系统',
-                                        link: '/zh/modules/modal-system',
-                                    },
-                                    {
-                                        text: 'Friend 系统',
-                                        link: '/zh/modules/friend-system',
-                                    },
-                                    {
-                                        text: 'Favorite 系统',
-                                        link: '/zh/modules/favorite-system',
-                                    },
-                                    {
-                                        text: 'Instance & Location',
-                                        link: '/zh/modules/instance-location',
-                                    },
-                                    {
-                                        text: '自定义仪表盘',
-                                        link: '/zh/modules/dashboard-system',
-                                    },
-                                    {
-                                        text: '状态栏',
-                                        link: '/zh/modules/status-bar',
-                                    },
-                                    {
-                                        text: 'Web Worker 架构',
-                                        link: '/zh/modules/web-worker',
-                                    },
-                                    {
-                                        text: '重构方向与进度',
-                                        link: '/zh/modules/refactoring-directions',
                                     },
                                 ],
                             },

@@ -1,6 +1,7 @@
 # Favorite 系统
 
-## 系统概览
+Favorite 系统管理 VRChat 收藏（好友、世界、模型），覆盖远程 API 分组和本地 VRCX 专属分组。
+
 
 ```mermaid
 graph TD
@@ -35,6 +36,8 @@ graph TD
     Store --> Views
     Store --> Consumers
 ```
+
+## 概览
 
 ## 收藏类型
 
@@ -136,7 +139,21 @@ favoriteCoordinator.removeFavorite(type, id)
 - "切换到"按钮
 - 从收藏中移除
 
-## 关键依赖
+## 文件清单
+
+| 文件 | 行数 | 职责 |
+|------|------|------|
+| `stores/favorite.js` | ~400 | 收藏状态、分组、缓存收藏 |
+| `coordinators/favoriteCoordinator.js` | ~350 | 添加/移除/移动收藏、分组操作 |
+| `api/favorite.js` | ~80 | VRChat 收藏 API 封装 |
+
+## 风险与注意事项
+
+- **远程和本地收藏**在 `allFavoriteFriendIds` 中合并。遗漏任一来源会导致 VIP 好友从侧边栏消失。
+- **收藏分组排序**影响侧边栏 VIP 区域的显示顺序。侧边栏设置 popover 控制哪些分组可见。
+- **`updateSidebarFavorites()`** 对每个受影响的好友触发 `reindexSortedFriend` —— 使用批处理模式延迟排序直到所有变更应用完毕。
+
+### 关键依赖
 
 | 模块 | 如何使用收藏 |
 |------|-------------|

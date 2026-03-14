@@ -1,7 +1,5 @@
 # WebSocket 服务
 
-## 概述
-
 WebSocket 服务（`services/websocket.js`）是 VRCX 的实时事件管线。它维护与 VRChat 服务器的持久 WebSocket 连接，并将传入事件分发到相应的 store 和 coordinator。它是应用中**唯一**的实时数据源 — 所有其他数据流都是基于轮询的。
 
 ```mermaid
@@ -33,6 +31,9 @@ graph TB
         Pipeline --> UIStore["uiStore"]
     end
 ```
+
+## 概览
+
 
 ## 响应式状态
 

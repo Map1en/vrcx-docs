@@ -1,7 +1,5 @@
 # 认证系统
 
-## 概述
-
 认证系统管理 VRCX 的完整认证生命周期，包括手动登录、自动登录、凭证持久化、双因素认证（2FA）、主密码加密以及登出。它是应用启动时第一个激活的系统，所有其他子系统都依赖 `watchState.isLoggedIn` 来决定是否启动。
 
 ```mermaid
@@ -33,6 +31,9 @@ graph TB
     AuthStore --> Security
     AuthStore --> WebApi
 ```
+
+## 概览
+
 
 ## 状态结构
 

@@ -1,7 +1,5 @@
 # Notification System
 
-## Overview
-
 The Notification System is the most complex single store in VRCX (1496 lines). It handles all notification types from VRChat — friend requests, invites, invite requests, vote kicks, instance closures — and bridges them into desktop notifications, sound alerts, VR overlay alerts, and the in-app notification center. With 15 dependent stores, it has the highest dependency count and the widest blast radius in the codebase.
 
 ```mermaid
@@ -42,6 +40,9 @@ graph TB
     NotifStore --> GameStore
     NotifStore --> InstanceStore
 ```
+
+## Overview
+
 
 ## Notification Types
 

@@ -1,7 +1,5 @@
 # WebSocket Service
 
-## Overview
-
 The WebSocket service (`services/websocket.js`) is VRCX's real-time event pipeline. It maintains a persistent WebSocket connection to VRChat's servers and dispatches incoming events to the appropriate stores and coordinators. It is the **only** real-time data source in the application — all other data flows are poll-based.
 
 ```mermaid
@@ -33,6 +31,9 @@ graph TB
         Pipeline --> UIStore["uiStore"]
     end
 ```
+
+## Overview
+
 
 ## Reactive State
 

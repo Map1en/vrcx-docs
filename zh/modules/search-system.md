@@ -1,7 +1,5 @@
 # 搜索与直接访问
 
-## 概述
-
 VRCX 有两个搜索系统：**Search Store** 用于 VRC API 驱动的搜索和直接实体访问，**Quick Search** 用于通过 Web Worker 在本地索引数据上进行客户端模糊搜索。
 
 ```mermaid
@@ -30,6 +28,9 @@ graph TB
     Coordinator -->|write| SearchIndex
     QuickSearch -->|read snapshot| SearchIndex
 ```
+
+## 概览
+
 
 ## 快速搜索
 
