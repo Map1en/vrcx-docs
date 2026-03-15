@@ -49,6 +49,10 @@ export default withMermaid(
                                         text: 'Backend Architecture',
                                         link: '/en/architecture/backend',
                                     },
+                                    {
+                                        text: 'C# Developer Guide',
+                                        link: '/en/architecture/csharp-guide',
+                                    },
                                 ],
                             },
                             {
@@ -202,6 +206,10 @@ export default withMermaid(
                                     {
                                         text: '后端架构参考',
                                         link: '/zh/architecture/backend',
+                                    },
+                                    {
+                                        text: 'C# 开发者指南',
+                                        link: '/zh/architecture/csharp-guide',
                                     },
                                 ],
                             },
