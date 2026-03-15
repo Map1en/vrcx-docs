@@ -1,6 +1,6 @@
 # 前端性能现状
 
-> 基于 **2026 年 3 月 14 日** 代码状态整理，按严重程度排序。
+> 基于 **2026 年 3 月 15 日** 代码状态整理，按严重程度排序。
 
 ## 🔴 关键
 
@@ -55,42 +55,35 @@
 - 建议方向：
   为同房分组、搜索索引、虚拟行数据建立更稳定的增量缓存，避免每次交互全量重建。
 
-### 5. `FriendsLocations` 的 `virtualizer.measure()` 触发过密
+### 5. ~~`FriendsLocations` 的 `virtualizer.measure()` 触发过密~~ ✅ 已解决
 
 - 位置：
   `src/views/FriendsLocations/FriendsLocations.vue`
-- 现状：
-  `searchTerm`、`activeSegment`、`showSameInstance`、`filteredFriends.length`、`cardScale/cardSpacing`、`virtualRows` 变更都会触发 `nextTick + virtualizer.measure()`。
-- 为什么严重：
-  一次用户动作会联动多个 watch，从而触发多次重复测量和布局计算，表现为搜索和切换时的抖动或掉帧。
-- 建议方向：
-  合并测量入口，做单帧节流，避免一个交互命中多个重复 `measure()`。
+- 解决于：`d52b0c7c`、`1c0a3509`
+- 改动：
+  引入 `scheduleVirtualMeasure()` —— 统一的合并调度路径，将所有 `measure()` 调用合并到一次 `nextTick` 中。`searchTerm`、`activeSegment`、`showSameInstance`、`filteredFriends.length`、`cardScale/cardSpacing`、`virtualRows` 等多个 watcher 现在全部通过这条单一路径，消除了每次交互的冗余测量。同时将手动 `ResizeObserver` 管理迁移到 `@vueuse/core` 的 `useResizeObserver`。
 
-### 6. 旧的快速搜索路径仍在主线程全量扫描好友
+### 6. ~~旧的快速搜索路径仍在主线程全量扫描好友~~ ✅ 已解决
 
 - 位置：
   `src/stores/search.js`
-- 现状：
-  `quickSearchRemoteMethod()` 仍会遍历 `friendStore.friends.values()`，并对名字、memo、note 做 `removeConfusables()` 和 `localeIncludes()` 匹配。
-- 为什么严重：
-  仓库已经有 worker 版快速搜索，这说明主线程实现本身就是已知热点。只要仍有入口走旧路径，大好友量下就会继续拖慢输入。
-- 建议方向：
-  统一到 `quickSearchWorker`，逐步移除旧主线程实现。
+- 解决于：`d52b0c7c`
+- 改动：
+  旧的 `quickSearchRemoteMethod()` 函数及其依赖（`friendStore`、`removeConfusables`、`localeIncludes`、`quickSearchItems` ref）被完全移除。所有快速搜索现在完全通过 `quickSearchWorker` 路由。`search.js` 从 ~450 行缩减到 ~300 行，现在只包含直接访问解析和用户搜索 API 逻辑。
 
 ## 🟡 中
 
-### 7. 列表缩放滑杆把每一步拖动都写进 SQLite 配置
+### 7. ~~列表缩放滑杆把每一步拖动都写进 SQLite 配置~~ ✅ 已解决（FriendsLocations）
 
 - 位置：
   `src/views/FriendsLocations/FriendsLocations.vue`
   `src/views/MyAvatars/composables/useAvatarCardGrid.js`
   `src/services/config.js`
-- 现状：
-  slider 的 setter 直接 `configRepository.setString()`，底层是 SQLite `INSERT OR REPLACE`。
-- 为什么有问题：
-  拖动时会把 UI 重算和高频写库叠在一起，放大交互成本。
-- 建议方向：
-  改成只在拖动结束后落库，或用 debounce 批量提交。
+- 解决于：`d52b0c7c`（FriendsLocations）、`1c0a3509`（useAvatarCardGrid ResizeObserver）
+- 改动：
+  `FriendsLocations` 现在将 `configRepository.setString()` 调用包裹在 `debounce(200ms)` 中，涵盖 `cardScale` 和 `cardSpacing` 两个滑杆。`useAvatarCardGrid` 重构为使用 `@vueuse/core` 的 `useResizeObserver`（移除了手动 `ResizeObserver` 生命周期管理），但其滑杆持久化在此次变更中未加 debounce。
+- 剩余：
+  `useAvatarCardGrid` 的滑杆 setter 仍然在每步拖动时直接调用 `configRepository.setString()`。
 
 ### 8. `FriendsSidebar` 渲染前的数据准备仍然是多层全量扫描
 
@@ -114,17 +107,14 @@
 - 建议方向：
   先复制数组再排序，或把排序结果缓存为独立派生值。
 
-### 10. Pinia action trail 插件对每个 action 都做完整 `localStorage` 读写
+### 10. ~~Pinia action trail 插件对每个 action 都做完整 `localStorage` 读写~~ ✅ 已删除
 
 - 位置：
-  `src/plugins/piniaActionTrail.js`
+  `src/plugins/piniaActionTrail.js`（已删除）
   `src/stores/index.js`
-- 现状：
-  插件会 `getItem -> JSON.parse -> push -> JSON.stringify -> setItem`；当前只在 `NIGHTLY` 构建启用。
-- 为什么有问题：
-  这是同步主线程存储操作。虽然只在 nightly 打开，但在状态变更密集场景里仍会明显放大卡顿。
-- 建议方向：
-  改成内存缓冲 + 定时刷盘，或仅在错误上报前一次性读取。
+- 解决于：`54f85c62`
+- 改动：
+  `piniaActionTrail.js` 已被完全删除。`stores/index.js` 中的 `registerPiniaActionTrailPlugin()` 调用和 60 秒延迟初始化被移除。`vrcx.js` 中的崩溃恢复上报不再读取或清除 trail。替换为 `rendererMemoryReport.js` —— 一个轻量的基于定时器的插件，监控 `performance.memory`，当 JS 堆使用率超过 80% 阈值时向 Sentry 发送警告（5 分钟冷却）。
 
 ## 备注
 

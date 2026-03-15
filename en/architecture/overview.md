@@ -34,7 +34,7 @@ graph TD
 
     subgraph Layer2["Layer 2 — Business Logic"]
         Coordinators["24 Coordinators"]
-        Composables["6 Composables"]
+        Composables["8 Composables"]
     end
 
     subgraph Layer1["Layer 1 — Data Access"]
@@ -101,7 +101,7 @@ graph TD
 | **Features** | feed, favorite, search, gallery, invite, moderation |
 | **Real-time** | notification (complex), vrcStatus |
 | **Game** | game, gameLog (dir), launch |
-| **UI State** | ui, modal, quickSearch, sharedFeed, charts, dashboard |
+| **UI State** | ui, modal, quickSearch, sharedFeed, charts, dashboard, tools |
 | **Settings** | settings/general, appearance, advanced, notifications, discordPresence, wristOverlay |
 | **System** | auth, updateLoop, vrcx, vrcxUpdater |
 | **Networking** | photon |
@@ -158,7 +158,7 @@ graph LR
 ```
 app.js
 ├── 1. initPlugins()          — Custom plugin setup
-├── 2. initPiniaPlugins()     — Pinia action trail (nightly)
+├── 2. initPiniaPlugins()     — Sentry Pinia plugin (nightly)
 ├── 3. VueQueryPlugin         — TanStack Vue Query
 ├── 4. Pinia                  — State management
 ├── 5. i18n                   — Internationalization

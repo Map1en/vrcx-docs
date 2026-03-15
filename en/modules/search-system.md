@@ -5,7 +5,7 @@ VRCX has two search systems that serve different scopes: **Search Store** for VR
 ```mermaid
 graph TB
     subgraph "Search Systems"
-        SearchStore["searchStore<br/>(450 lines)"]
+        SearchStore["searchStore<br/>(~300 lines)"]
         QuickSearch["quickSearchStore<br/>(237 lines)"]
     end
 
@@ -34,31 +34,7 @@ graph TB
 
 ## Search Store (`searchStore`)
 
-### Quick Search
-
-The top-bar search component uses quick search for instant friend lookup:
-
-```mermaid
-sequenceDiagram
-    participant User as User Types
-    participant Quick as quickSearchRemoteMethod
-    participant Friends as friendStore.friends
-    participant Results as quickSearchItems
-
-    User->>Quick: query (≥2 chars)
-    Quick->>Quick: removeWhitespace + removeConfusables
-    Quick->>Friends: Iterate all friends
-    Note right of Quick: Match against:<br/>1. Clean displayName<br/>2. Original displayName<br/>3. User memo<br/>4. User note
-    Quick->>Quick: Sort: prefix matches first
-    Quick->>Quick: Cap at 4 results
-    Quick->>Results: [...matches, { search: query }]
-```
-
-**Key behaviors:**
-- Uses `Intl.Collator` with locale-aware case-insensitive comparison
-- Falls back to user history (last 5 viewed users) when query is empty
-- Appends a "search for..." option at the end of results
-- Confusables removal (`removeConfusables`) normalizes Unicode lookalike characters
+The search store handles VRC API-powered search, direct entity access, and clipboard-based direct access. Legacy in-store quick-search (`quickSearchRemoteMethod`) was **removed** in `d52b0c7c` — all client-side quick-search is now handled exclusively by `quickSearchStore` + `quickSearchWorker`.
 
 ### Direct Access Parser
 
@@ -171,7 +147,7 @@ The quick search uses a dedicated Web Worker to avoid blocking the UI thread:
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `stores/search.js` | 450 | Quick search, direct access, user search API |
+| `stores/search.js` | ~300 | Direct access, user search API |
 | `stores/searchIndex.js` | ~260 | Search index data container |
 | `stores/quickSearch.js` | 237 | Worker-based quick search orchestration |
 | `stores/quickSearchWorker.js` | 373 | Web Worker: confusables, locale search |
@@ -179,7 +155,6 @@ The quick search uses a dedicated Web Worker to avoid blocking the UI thread:
 
 ## Risks & Gotchas
 
-- **Quick search iterates ALL friends** on every keystroke (debounced). For users with 5000+ friends, this can be noticeable.
 - **`removeConfusables`** handles Unicode normalization but may miss new Unicode characters.
 - **Direct access parsing** uses regex and string prefix matching — some edge cases with malformed URLs may not parse correctly.
 - **The search worker** holds a complete copy of all indexed data in memory. This doubles the memory usage for friend data.

@@ -1,6 +1,6 @@
 # Frontend Performance
 
-> Based on the codebase state on **March 14, 2026**, ordered by severity.
+> Based on the codebase state on **March 15, 2026**, ordered by severity.
 
 ## 🔴 Critical
 
@@ -55,42 +55,35 @@
 - Direction:
   Introduce more stable incremental caches for same-instance groups, search inputs, and virtual row data.
 
-### 5. `FriendsLocations` calls `virtualizer.measure()` too often
+### 5. ~~`FriendsLocations` calls `virtualizer.measure()` too often~~ ✅ Resolved
 
 - Location:
   `src/views/FriendsLocations/FriendsLocations.vue`
-- Current state:
-  Changes to `searchTerm`, `activeSegment`, `showSameInstance`, `filteredFriends.length`, `cardScale/cardSpacing`, and `virtualRows` all trigger `nextTick + virtualizer.measure()`.
-- Why it matters:
-  One user interaction can fan out into multiple redundant measurements and layout work, which shows up as stutter during search and segment switches.
-- Direction:
-  Merge measurement triggers behind a single scheduled path and throttle to one measure per frame.
+- Resolved in: `d52b0c7c`, `1c0a3509`
+- What was done:
+  Introduced `scheduleVirtualMeasure()` — a single coalescing path that batches all `measure()` calls behind one `nextTick`. Multiple watchers (`searchTerm`, `activeSegment`, `showSameInstance`, `filteredFriends.length`, `cardScale/cardSpacing`, `virtualRows`) now all funnel through this single path, eliminating redundant measurements per interaction. Also migrated manual `ResizeObserver` management to `@vueuse/core`'s `useResizeObserver`.
 
-### 6. One legacy quick-search path still scans all friends on the main thread
+### 6. ~~One legacy quick-search path still scans all friends on the main thread~~ ✅ Resolved
 
 - Location:
   `src/stores/search.js`
-- Current state:
-  `quickSearchRemoteMethod()` still loops over `friendStore.friends.values()` and applies `removeConfusables()` and `localeIncludes()` against names, memos, and notes.
-- Why it matters:
-  The repo already contains a worker-based quick-search implementation, which makes the remaining main-thread path a known regression risk whenever it is still used.
-- Direction:
-  Route all quick-search entry points through `quickSearchWorker` and retire the legacy main-thread path.
+- Resolved in: `d52b0c7c`
+- What was done:
+  The legacy `quickSearchRemoteMethod()` function was completely removed along with its dependencies (`friendStore`, `removeConfusables`, `localeIncludes`, `quickSearchItems` ref). All quick-search is now routed exclusively through `quickSearchWorker`. `search.js` shrank from ~450 to ~300 lines, now only containing direct access parsing and user search API logic.
 
 ## 🟡 Medium
 
-### 7. Card-size sliders persist every drag step into SQLite config
+### 7. ~~Card-size sliders persist every drag step into SQLite config~~ ✅ Resolved (FriendsLocations)
 
 - Location:
   `src/views/FriendsLocations/FriendsLocations.vue`
   `src/views/MyAvatars/composables/useAvatarCardGrid.js`
   `src/services/config.js`
-- Current state:
-  Slider setters call `configRepository.setString()` directly, and the config backend writes through SQLite `INSERT OR REPLACE`.
-- Why it matters:
-  UI recalculation and frequent writes are stacked on top of each other during drag interactions.
-- Direction:
-  Persist on drag-end or debounce config writes.
+- Resolved in: `d52b0c7c` (FriendsLocations), `1c0a3509` (useAvatarCardGrid ResizeObserver)
+- What was done:
+  `FriendsLocations` now wraps `configRepository.setString()` calls in `debounce(200ms)` for both `cardScale` and `cardSpacing` sliders. `useAvatarCardGrid` was refactored to use `@vueuse/core`'s `useResizeObserver` (removing manual `ResizeObserver` lifecycle), though its slider persistence was not debounced in this change.
+- Remaining:
+  `useAvatarCardGrid` slider setters still call `configRepository.setString()` directly on every drag step.
 
 ### 8. `FriendsSidebar` still does multi-pass full scans before render
 
@@ -114,17 +107,14 @@
 - Direction:
   Sort copies instead of source arrays, or cache a separate derived ordering.
 
-### 10. The Pinia action trail plugin reads and rewrites full `localStorage` JSON on every action
+### 10. ~~The Pinia action trail plugin reads and rewrites full `localStorage` JSON on every action~~ ✅ Removed
 
 - Location:
-  `src/plugins/piniaActionTrail.js`
+  `src/plugins/piniaActionTrail.js` (deleted)
   `src/stores/index.js`
-- Current state:
-  The plugin does `getItem -> JSON.parse -> push -> JSON.stringify -> setItem` per action. It is currently only enabled for `NIGHTLY` builds.
-- Why it matters:
-  This is synchronous main-thread storage IO. Even though it is nightly-only, it can still amplify jank during action-heavy debugging sessions.
-- Direction:
-  Buffer in memory and flush periodically, or read the trail only when a report is actually emitted.
+- Resolved in: `54f85c62`
+- What was done:
+  `piniaActionTrail.js` was completely deleted. The `registerPiniaActionTrailPlugin()` call and the 60-second delayed initialization were removed from `stores/index.js`. Crash recovery reporting in `vrcx.js` no longer reads or clears the trail. Replaced by `rendererMemoryReport.js` — a lightweight interval-based plugin that monitors `performance.memory` and sends a Sentry warning when JS heap usage exceeds 80% of the limit (with a 5-minute cooldown).
 
 ## Notes
 

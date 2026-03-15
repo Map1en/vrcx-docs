@@ -34,7 +34,7 @@ graph TD
 
     subgraph Layer2["第 2 层 — 业务逻辑"]
         Coordinators["24 个 Coordinator"]
-        Composables["6 个 Composable"]
+        Composables["8 个 Composable"]
     end
 
     subgraph Layer1["第 1 层 — 数据访问"]
@@ -101,7 +101,7 @@ graph TD
 | **功能** | feed, favorite, search, gallery, invite, moderation |
 | **实时** | notification（复杂）, vrcStatus |
 | **游戏** | game, gameLog (目录), launch |
-| **UI 状态** | ui, modal, quickSearch, sharedFeed, charts, dashboard |
+| **UI 状态** | ui, modal, quickSearch, sharedFeed, charts, dashboard, tools |
 | **设置** | settings/general, appearance, advanced, notifications, discordPresence, wristOverlay |
 | **系统** | auth, updateLoop, vrcx, vrcxUpdater |
 | **网络** | photon |
@@ -158,7 +158,7 @@ graph LR
 ```
 app.js
 ├── 1. initPlugins()          — 自定义插件初始化
-├── 2. initPiniaPlugins()     — Pinia action trail (nightly)
+├── 2. initPiniaPlugins()     — Sentry Pinia 插件 (nightly)
 ├── 3. VueQueryPlugin         — TanStack Vue Query
 ├── 4. Pinia                  — 状态管理
 ├── 5. i18n                   — 国际化
