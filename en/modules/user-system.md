@@ -1,6 +1,6 @@
 # User System
 
-The User System is the **central hub** of the VRCX data model. It manages the current user's state, cached user references for all known users, the user dialog (an 11-tab user detail popup), and user-related coordinators that bridge API responses into reactive state. With 13 direct dependents, changes to the User System have the highest blast radius of any store in the codebase.
+The User System is the **central hub** of the VRCX data model. It manages the current user's state, cached user references for all known users, the user dialog (a 12-tab user detail popup), and user-related coordinators that bridge API responses into reactive state. With 13 direct dependents, changes to the User System have the highest blast radius of any store in the codebase.
 
 ```mermaid
 graph TB
@@ -84,13 +84,13 @@ const cachedUsers = shallowReactive(new Map());
 
 Every user encountered through friend lists, instance player lists, search results, or WebSocket events is cached here. The cache uses `shallowReactive` for performance — only the Map membership triggers reactivity, not deep property changes on individual user objects.
 
-### `userDialog` — 11-Tab User Detail Popup
+### `userDialog` — 12-Tab User Detail Popup
 
 ```js
 userDialog: {
     visible: false,
     loading: false,
-    activeTab: 'Info',       // Info | Worlds | Avatars | Favorites | Groups | JSON | ...
+    activeTab: 'Info',       // Info | Worlds | Avatars | Favorites | Groups | Activity | JSON | ...
     id: '',                  // userId being viewed
     ref: {},                 // cached user reference
     friend: {},              // friend context (if friend)
@@ -229,6 +229,101 @@ sequenceDiagram
 | `user-update` | `applyCurrentUser(content.user)` for self |
 | `user-location` | `runSetCurrentUserLocationFlow()` for self |
 
+## Activity Heatmap
+
+The **Activity** tab (`UserDialogActivityTab.vue`) displays an ECharts heatmap visualizing a user's online frequency by day-of-week × hour-of-day.
+
+### Data Source
+
+- Queries `database.getOnlineOfflineCountByHour(userId)` which aggregates feed entries of type `Online` from SQLite
+- Returns `{ dayOfWeek, hour, count }` tuples grouped by day (0=Sun..6=Sat) and hour (0..23)
+- Reordered to Mon–Sun for display (row 0=Mon at top)
+
+### Features
+
+| Feature | Details |
+|---------|---------|
+| **Heatmap** | 7×24 grid, color intensity maps to event count |
+| **Peak Stats** | Shows most active day and most active time slot above the chart |
+| **Dark Mode** | Adapts color scheme via `isDarkMode` watch |
+| **Refresh** | Manual reload button; auto-loads when the tab becomes active |
+| **Context Menu** | Right-click to save chart as PNG |
+| **Empty State** | Shows `DataTableEmpty` when no online events found |
+
+### Persistence Key
+
+No persistence — data is read-only from the feed database.
+
+## UserDialog Tab Search
+
+Four UserDialog tabs now support **client-side search** via a text input that filters the displayed list:
+
+| Tab | Search Scope | Implementation |
+|-----|-------------|----------------|
+| **Mutual Friends** | `displayName` | Filter `mutualFriends` array |
+| **Groups** | `name` | Filter across all group divisions (own, mutual, remaining) as a flat list; group division headers hidden during search |
+| **Worlds** | `name` | Filter `userWorlds` array |
+| **Favorite Worlds** | `name` | Filter across all sub-tabs; sub-tab navigation hidden during search |
+
+Search is case-insensitive and visible for all user profiles (not just the current user).
+
+## Social Status Presets
+
+Users can save and quickly apply social status presets (status + statusDescription combinations).
+
+### Architecture
+
+```
+useStatusPresets() composable
+├── presets: ref([])              // Reactive preset array
+├── addPreset(status, desc)       // Add new, returns 'ok' | 'exists' | 'limit'
+├── removePreset(index)           // Remove by index
+├── getStatusClass(status)        // CSS class mapping
+└── MAX_PRESETS = 10              // Hard limit
+```
+
+### Data Flow
+
+- **Storage**: `configRepository` key `VRCX_statusPresets` (JSON array)
+- **Load**: Lazy-loaded once on first `useStatusPresets()` call
+- **Apply**: Clicking a preset fills `socialStatusDialog.status` and `socialStatusDialog.statusDescription`
+- **Delete**: Hover reveals an X button on each preset tag
+
+### Access Points
+
+| Location | Interaction |
+|----------|-------------|
+| **SocialStatusDialog** | Save current status as preset; click preset to apply; hover-delete |
+| **FriendsSidebar** (right-click context menu) | Quick-apply presets from a submenu |
+
+## Recent Action Indicators
+
+A clock icon appears next to recently performed actions (invites, friend requests) in the UserDialog action dropdown.
+
+### Architecture
+
+```
+useRecentActions.js composable (module-level state)
+├── recordRecentAction(userId, actionType)   // Record timestamp
+├── isActionRecent(userId, actionType)       // Check if within cooldown
+└── clearRecentActions()                     // Reset all
+```
+
+### Tracked Actions
+
+`Send Friend Request`, `Request Invite`, `Invite`, `Request Invite Message`, `Invite Message`
+
+### Settings
+
+| Setting | Key | Default |
+|---------|-----|---------|
+| Enable | `VRCX_recentActionCooldownEnabled` | `false` |
+| Cooldown (minutes) | `VRCX_recentActionCooldownMinutes` | `60` (range: 1–1440) |
+
+### Storage
+
+Uses `localStorage` via `@vueuse/core`'s `useLocalStorage('VRCX_recentActions', {})`. Key format: `${userId}:${actionType}` → timestamp (ms). Expired entries are cleaned up lazily on read.
+
 ## User Notes System
 
 VRCX maintains a local **user notes** system separate from VRChat's built-in notes:
@@ -259,7 +354,7 @@ function checkNote(userId, newNote) {
 
 - **`applyUser()` is called on EVERY user data update.** Performance is critical — avoid adding expensive computations here.
 - **`cachedUsers` uses `shallowReactive`.** Individual user properties are NOT reactive. Components must use the whole ref or specific computed properties.
-- **`userDialog` has 30+ fields.** It's effectively a sub-store. Changes to dialog logic must consider all 11 tabs.
+- **`userDialog` has 30+ fields.** It's effectively a sub-store. Changes to dialog logic must consider all 12 tabs.
 - **The `$trustLevel` computation** relies on parsing VRChat tags. If VRC changes their tag format, this will break silently.
 - **`currentTravelers`** (Map) tracks friends who are currently traveling. It's rebuilt by `sharedFeedStore.rebuildOnPlayerJoining()` and is deep-watched.
 - **Auto state change** modifies the user's VRChat status automatically. This is a **destructive action** that changes server-side state — bugs here directly affect the user's social presence.

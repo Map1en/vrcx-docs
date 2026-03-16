@@ -44,7 +44,7 @@ graph LR
 |--------|--------|----------|
 | **代理** | `generalSettingsStore.proxyEnabled` | Tooltip |
 | **游戏** | `gameStore.isGameRunning` + `userStore.currentUser.$online_for` | HoverCard（会话详情） |
-| **服务器** | `vrcStatusStore.hasIssue` + `incidents` | HoverCard（事件列表） |
+| **服务器** | `vrcStatusStore.hasIssue` + `isMajor` | HoverCard（事件列表）；圆点颜色：`isMajor` 时为红色，否则为琥珀色 |
 | **WebSocket** | `vrcxStore.wsConnected` | Tooltip |
 | **SteamVR** | `gameStore.isSteamVRRunning` | Tooltip |
 | **消息频率图** | `vrcxStore.wsMessageRates` | Canvas 图表（msg/min） |
@@ -156,3 +156,24 @@ sequenceDiagram
 | `game_session_duration` | Duration | Hover：精确 session 时长 |
 | `game_last_session` | Last Session | Hover：上次 session 时长 |
 | `game_last_offline` | Offline Since | Hover：上次离线时间 |
+
+## 服务器状态严重级别
+
+`vrcStatusStore` 暴露了两个新的响应式字段，用于感知严重级别的渲染：
+
+| 字段 | 类型 | 用途 |
+|------|------|------|
+| `lastStatusIndicator` | `ref('')` | 来自 Statuspage API 的原始 indicator 字符串（`'minor'`、`'major'`、`'critical'` 等） |
+| `isMajor` | `computed` | `lastStatusIndicator === 'major'` 时为 `true` |
+
+状态栏圆点在 `isMajor` 为 true 时使用 `bg-destructive`（红色），否则使用 `bg-status-askme`（琥珀色）。
+
+## 登录页服务器告警
+
+当 `vrcStatusStore.hasIssue` 为 `true` 时，**登录页** (`Login.vue`) 在登录表单上方显示 `<Alert>` 横幅：
+
+- **变体**：`isMajor` 时为 `destructive`（红色），否则为 `warning`（琥珀色）
+- **内容**：来自 `vrcStatusStore` 的 `statusText`（事件描述）
+- **点击**：通过 `vrcStatusStore.openStatusPage()` 打开 VRChat 状态页面
+
+确保用户在尝试登录前了解服务器问题。

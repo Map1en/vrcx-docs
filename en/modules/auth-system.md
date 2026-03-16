@@ -266,6 +266,17 @@ These are stored in `AppDebug.endpointDomain` / `AppDebug.websocketDomain` and a
 | `notificationStore` | out → | Reset notification init status on logout |
 | `queryClient` | out → | Clear Vue Query cache on logout |
 
+## Login Page Server Status Alert
+
+The Login page (`Login.vue`) displays an `<Alert>` banner above the login form when VRChat servers have active issues:
+
+- **Condition**: `vrcStatusStore.hasIssue === true`
+- **Variant**: `destructive` (red) when `vrcStatusStore.isMajor`, `warning` (amber) otherwise
+- **Content**: Shows `vrcStatusStore.statusText` (incident description from Statuspage API)
+- **Click**: Opens VRChat status page via `vrcStatusStore.openStatusPage()`
+
+This informs users of server issues before they attempt login, reducing confusion from auth failures during outages. See [Status Bar — Server Status Severity](/en/modules/status-bar#server-status-severity) for the underlying `vrcStatusStore` fields.
+
 ## Risks & Gotchas
 
 - **`watchState.isLoggedIn` is the master switch.** Setting it to `true` in `loginComplete()` triggers watchers across 15+ stores. Setting it to `false` in `runLogoutFlow()` triggers cleanup across all the same stores.

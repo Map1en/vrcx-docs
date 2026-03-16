@@ -276,16 +276,21 @@ runDeleteFriendshipFlow(id)
 
 **Structure**: Search → Action buttons → Tabs (Friends / Groups) → Sorted lists
 
-**Friend Categories** (in order):
+**Friend Categories** (default order):
 1. VIP Friends (favorite groups)
-2. Online Friends
-3. Active Friends
-4. Offline Friends
-5. Same Instance Groups (optional)
+2. Same Instance Groups (optional)
+3. Online Friends
+4. Active Friends
+5. Offline Friends
+
+The order of items 1 and 2 is controlled by `isSameInstanceAboveFavorites`. When enabled, same-instance groups appear **above** VIP favorites; when disabled (default), they appear below.
 
 **7 Sort Methods**: Alphabetical, by Status, Private to Bottom, Last Active, Last Seen, Time in Instance, by Location
 
-**Settings**: Group by instance, hide same-instance group, split by favorite group, favorite group filter
+**Settings**: Group by instance, hide same-instance group, **prioritize same instance above favorites**, split by favorite group, favorite group filter
+
+**Context Menu Features**:
+- Right-click on the user status area reveals a context menu with status options and, if presets exist, a **Status Presets** submenu for quick status switching (see [Social Status Presets](/en/modules/user-system#social-status-presets))
 
 ### FriendsLocations (Full Page)
 
@@ -317,6 +322,12 @@ runDeleteFriendshipFlow(id)
 | `coordinators/friendPresenceCoordinator.js` | ~315 | WebSocket presence events, 170s pending offline |
 | `coordinators/friendRelationshipCoordinator.js` | ~300 | Add/remove friendship, friend log entries |
 | `coordinators/friendSyncCoordinator.js` | ~200 | Initial load, incremental refresh, pagination |
+
+## Sidebar Persistence Keys
+
+| Key | Type | Default | Purpose |
+|-----|------|---------|---------|
+| `VRCX_sameInstanceAboveFavorites` | Boolean | `false` | When true, same-instance friends appear above VIP favorites |
 
 ## Risks & Gotchas
 

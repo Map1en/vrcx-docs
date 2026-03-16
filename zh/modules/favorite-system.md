@@ -132,6 +132,16 @@ favoriteCoordinator.removeFavorite(type, id)
 - 启动选项
 - 从收藏中移除
 
+**排序选项**（通过工具栏下拉菜单）：
+
+| 排序值 | 行为 |
+|--------|------|
+| `name` | 按世界名称字母排序（默认） |
+| `date` | 按添加到收藏的日期排序 |
+| `players` | 按当前玩家数降序 — 远程收藏使用 `ref.occupants`，本地收藏使用 `occupants` |
+
+`players` 排序在已分组的列表上以本地 `.toSorted()` 逐组应用，因此不影响底层收藏顺序。
+
 ### Favorites/Avatars
 
 模型详情数据表：

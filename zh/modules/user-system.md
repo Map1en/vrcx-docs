@@ -1,6 +1,6 @@
 # 用户系统
 
-用户系统是 VRCX 数据模型的**核心枢纽**。它管理当前用户状态、所有已知用户的缓存引用、用户对话框（11 标签页的用户详情弹窗），以及将 API 响应桥接到响应式状态的用户 Coordinator。拥有 13 个直接依赖者，对用户系统的修改具有代码库中最大的影响范围。
+用户系统是 VRCX 数据模型的**核心枢纽**。它管理当前用户状态、所有已知用户的缓存引用、用户对话框（12 标签页的用户详情弹窗），以及将 API 响应桥接到响应式状态的用户 Coordinator。拥有 13 个直接依赖者，对用户系统的修改具有代码库中最大的影响范围。
 
 ```mermaid
 graph TB
@@ -84,13 +84,13 @@ const cachedUsers = shallowReactive(new Map());
 
 通过好友列表、实例玩家列表、搜索结果或 WebSocket 事件遇到的每个用户都会被缓存。缓存使用 `shallowReactive` 以提升性能 — 仅 Map 成员变更触发响应性，个别用户对象的深层属性变更不会。
 
-### `userDialog` — 11 标签页用户详情弹窗
+### `userDialog` — 12 标签页用户详情弹窗
 
 ```js
 userDialog: {
     visible: false,
     loading: false,
-    activeTab: 'Info',       // Info | Worlds | Avatars | Favorites | Groups | JSON | ...
+    activeTab: 'Info',       // Info | Worlds | Avatars | Favorites | Groups | Activity | JSON | ...
     id: '',                  // 正在查看的 userId
     ref: {},                 // 缓存的用户引用
     friend: {},              // 好友上下文（如果是好友）
@@ -229,6 +229,101 @@ sequenceDiagram
 | `user-update` | 自身 `applyCurrentUser(content.user)` |
 | `user-location` | 自身 `runSetCurrentUserLocationFlow()` |
 
+## 活跃度热力图
+
+**Activity** 标签页 (`UserDialogActivityTab.vue`) 使用 ECharts 热力图展示用户按 星期×小时 的在线频率。
+
+### 数据源
+
+- 查询 `database.getOnlineOfflineCountByHour(userId)`，聚合 SQLite 中 `Online` 类型的 feed 条目
+- 返回 `{ dayOfWeek, hour, count }` 元组，按天（0=周日..6=周六）和小时（0..23）分组
+- 显示时重排为周一至周日（行 0=周一 在顶部）
+
+### 功能
+
+| 功能 | 详情 |
+|------|------|
+| **热力图** | 7×24 网格，颜色强度映射到事件数量 |
+| **峰值统计** | 在图表上方显示最活跃的日期和时间段 |
+| **深色模式** | 通过 `isDarkMode` watch 适配配色方案 |
+| **刷新** | 手动刷新按钮；标签页激活时自动加载 |
+| **右键菜单** | 右键保存图表为 PNG |
+| **空状态** | 无在线事件时显示 `DataTableEmpty` |
+
+### 持久化
+
+无持久化 — 数据从 feed 数据库只读获取。
+
+## UserDialog 标签页搜索
+
+四个 UserDialog 标签页现在支持**客户端搜索**，通过文本输入过滤显示列表：
+
+| 标签页 | 搜索范围 | 实现方式 |
+|--------|---------|----------|
+| **共同好友** | `displayName` | 过滤 `mutualFriends` 数组 |
+| **群组** | `name` | 跨所有群组分类（自己的、共同的、其余的）作为扁平列表过滤；搜索时隐藏分类标题 |
+| **世界** | `name` | 过滤 `userWorlds` 数组 |
+| **收藏世界** | `name` | 跨所有子标签页过滤；搜索时隐藏子标签导航 |
+
+搜索不区分大小写，对所有用户资料可见（不仅限于当前用户）。
+
+## 社交状态预设
+
+用户可以保存并快速应用社交状态预设（status + statusDescription 组合）。
+
+### 架构
+
+```
+useStatusPresets() composable
+├── presets: ref([])              // 响应式预设数组
+├── addPreset(status, desc)       // 添加，返回 'ok' | 'exists' | 'limit'
+├── removePreset(index)           // 按索引删除
+├── getStatusClass(status)        // CSS 类映射
+└── MAX_PRESETS = 10              // 硬性限制
+```
+
+### 数据流
+
+- **存储**：`configRepository` key `VRCX_statusPresets`（JSON 数组）
+- **加载**：首次调用 `useStatusPresets()` 时懒加载
+- **应用**：点击预设填充 `socialStatusDialog.status` 和 `socialStatusDialog.statusDescription`
+- **删除**：悬停显示每个预设标签上的 X 按钮
+
+### 访问入口
+
+| 位置 | 交互方式 |
+|------|----------|
+| **SocialStatusDialog** | 保存当前状态为预设；点击预设应用；悬停删除 |
+| **FriendsSidebar**（右键菜单） | 从子菜单快速应用预设 |
+
+## 最近操作指示器
+
+在 UserDialog 操作下拉菜单中，最近执行的操作（邀请、好友请求）旁边会显示一个时钟图标。
+
+### 架构
+
+```
+useRecentActions.js composable（模块级状态）
+├── recordRecentAction(userId, actionType)   // 记录时间戳
+├── isActionRecent(userId, actionType)       // 检查是否在冷却期内
+└── clearRecentActions()                     // 重置全部
+```
+
+### 追踪的操作
+
+`Send Friend Request`、`Request Invite`、`Invite`、`Request Invite Message`、`Invite Message`
+
+### 设置
+
+| 设置 | Key | 默认值 |
+|------|-----|--------|
+| 启用 | `VRCX_recentActionCooldownEnabled` | `false` |
+| 冷却时间（分钟） | `VRCX_recentActionCooldownMinutes` | `60`（范围：1–1440） |
+
+### 存储
+
+使用 `@vueuse/core` 的 `useLocalStorage('VRCX_recentActions', {})` 存储在 `localStorage`。Key 格式：`${userId}:${actionType}` → 时间戳（ms）。过期条目在读取时惰性清理。
+
 ## 文件映射
 
 | 文件 | 行数 | 用途 |
@@ -242,7 +337,7 @@ sequenceDiagram
 
 - **`applyUser()` 在每次用户数据更新时被调用。** 性能至关重要 — 避免在此添加昂贵的计算。
 - **`cachedUsers` 使用 `shallowReactive`。** 个别用户属性不具有响应性。组件必须使用完整 ref 或特定的 computed 属性。
-- **`userDialog` 有 30+ 个字段。** 它实际上是一个子 store。对对话框逻辑的修改必须考虑所有 11 个标签页。
+- **`userDialog` 有 30+ 个字段。** 它实际上是一个子 store。对对话框逻辑的修改必须考虑所有 12 个标签页。
 - **`$trustLevel` 计算**依赖于解析 VRChat 标签。如果 VRC 更改标签格式，这会静默失效。
 - **`currentTravelers`**（Map）追踪当前正在移动的好友。由 `sharedFeedStore.rebuildOnPlayerJoining()` 重建，并被深度监听。
 - **自动状态切换**会自动修改用户的 VRChat 状态。这是一个**破坏性操作**，会改变服务端状态 — 此处的 bug 会直接影响用户的社交存在感。

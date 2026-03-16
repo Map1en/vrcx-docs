@@ -44,7 +44,7 @@ graph LR
 |-----------|-----------|-------------|
 | **Proxy** | `generalSettingsStore.proxyEnabled` | Tooltip |
 | **Game** | `gameStore.isGameRunning` + `userStore.currentUser.$online_for` | HoverCard (session details) |
-| **Servers** | `vrcStatusStore.hasIssue` + `incidents` | HoverCard (incident list) |
+| **Servers** | `vrcStatusStore.hasIssue` + `isMajor` | HoverCard (incident list); dot color: red if `isMajor`, amber otherwise |
 | **WebSocket** | `vrcxStore.wsConnected` | Tooltip |
 | **SteamVR** | `gameStore.isSteamVRRunning` | Tooltip |
 | **Sparkline** | `vrcxStore.wsMessageRates` | Canvas graph (msg/min) |
@@ -156,3 +156,24 @@ All status bar strings are under the `status_bar` namespace in localization file
 | `game_session_duration` | Duration | Hover: precise session length |
 | `game_last_session` | Last Session | Hover: previous session length |
 | `game_last_offline` | Offline Since | Hover: previous offline time |
+
+## Server Status Severity
+
+`vrcStatusStore` exposes two new reactive fields for severity-aware rendering:
+
+| Field | Type | Purpose |
+|-------|------|---------|
+| `lastStatusIndicator` | `ref('')` | Raw indicator string from Statuspage API (`'minor'`, `'major'`, `'critical'`, etc.) |
+| `isMajor` | `computed` | `true` when `lastStatusIndicator === 'major'` |
+
+The StatusBar dot uses `bg-destructive` (red) when `isMajor` is true, and `bg-status-askme` (amber) otherwise.
+
+## Login Page Server Alert
+
+When `vrcStatusStore.hasIssue` is `true`, the **Login page** (`Login.vue`) displays an `<Alert>` banner above the login form:
+
+- **Variant**: `destructive` (red) if `isMajor`, `warning` (amber) otherwise
+- **Content**: `statusText` from `vrcStatusStore` (incident description)
+- **Click**: Opens the VRChat status page via `vrcStatusStore.openStatusPage()`
+
+This ensures users are aware of server issues before attempting to log in.

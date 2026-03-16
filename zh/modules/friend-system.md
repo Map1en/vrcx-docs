@@ -276,16 +276,21 @@ runDeleteFriendshipFlow(id)
 
 **结构**：搜索 → 操作按钮 → 标签页（好友 / 群组） → 排序列表
 
-**好友分类**（按顺序）：
+**好友分类**（默认顺序）：
 1. VIP 好友（收藏分组）
-2. 在线好友
-3. 活跃好友
-4. 离线好友
-5. 同实例分组（可选）
+2. 同实例分组（可选）
+3. 在线好友
+4. 活跃好友
+5. 离线好友
+
+第 1 项和第 2 项的顺序由 `isSameInstanceAboveFavorites` 控制。启用时，同实例分组显示在 VIP 收藏**上方**；禁用时（默认），显示在下方。
 
 **7 种排序**：按字母、按状态、私有排底部、按最近活跃、按最近上线、按实例时长、按位置
 
-**设置**：按实例分组、隐藏同实例分组、按收藏分组拆分、收藏分组过滤
+**设置**：按实例分组、隐藏同实例分组、**同实例优先显示在收藏上方**、按收藏分组拆分、收藏分组过滤
+
+**右键菜单功能**：
+- 右键点击用户状态区域会显示一个上下文菜单，包含状态选项；如果有预设，还会显示一个**状态预设**子菜单用于快速切换状态（参见[社交状态预设](/zh/modules/user-system#社交状态预设)）
 
 ### FriendsLocations（全页）
 
@@ -317,6 +322,12 @@ runDeleteFriendshipFlow(id)
 | `coordinators/friendPresenceCoordinator.js` | ~315 | WebSocket 在线状态事件、170s 待离线机制 |
 | `coordinators/friendRelationshipCoordinator.js` | ~300 | 添加/删除好友关系、好友日志条目 |
 | `coordinators/friendSyncCoordinator.js` | ~200 | 初始加载、增量刷新、分页 |
+
+## Sidebar 持久化 Key
+
+| Key | 类型 | 默认值 | 用途 |
+|-----|------|--------|------|
+| `VRCX_sameInstanceAboveFavorites` | Boolean | `false` | 为 true 时，同实例好友显示在 VIP 收藏上方 |
 
 ## 风险与注意事项
 

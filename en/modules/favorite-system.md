@@ -132,6 +132,16 @@ Data table with world details:
 - Launch options
 - Remove from favorites
 
+**Sort Options** (via toolbar dropdown):
+
+| Sort Value | Behavior |
+|-----------|----------|
+| `name` | Alphabetical by world name (default) |
+| `date` | By date added to favorites |
+| `players` | By current player count (descending) — uses `ref.occupants` for remote favorites, `occupants` for local |
+
+The `players` sort is applied per-group as a local `.toSorted()` on the already-grouped list, so it does not affect the underlying favorite order.
+
 ### Favorites/Avatars
 
 Data table with avatar details:
