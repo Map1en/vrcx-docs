@@ -149,6 +149,21 @@ Data table with avatar details:
 - "Switch to" button
 - Remove from favorites
 
+## Favorites World Tag Search
+
+The Favorites/Worlds toolbar includes a **search mode toggle** (`name` / `tag`) that switches between searching by world name and searching by world tags. When `tag` mode is active, the search input queries `world.tags[]` instead of `world.name`.
+
+- **Toggle**: `ToggleGroup` in `FavoritesToolbar.vue` — `searchMode` prop (`'name'` | `'tag'`)
+- **Search scope**: Searches across both remote and local favorite worlds (merged via `searchableWorldEntries`)
+- **Files**: `FavoritesToolbar.vue`, `FavoritesWorld.vue`
+
+## Favorite Friend Group Invite
+
+The Invite Dialog (`InviteDialog.vue`) allows inviting online friends filtered by specific favorite groups. A dropdown in the dialog header lists all favorite friend groups — selecting one filters the displayed friend list to only show online friends in that group.
+
+- **Data source**: `favoriteStore.favoriteGroups` (friend type) cross-referenced with `friendStore.friends`
+- **Files**: `InviteDialog.vue`
+
 ## File Map
 
 | File | Lines | Purpose |

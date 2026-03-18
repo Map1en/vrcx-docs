@@ -254,6 +254,20 @@ sequenceDiagram
 
 无持久化 — 数据从 feed 数据库只读获取。
 
+### 时间段筛选器
+
+`<Select>` 下拉菜单允许按时间段筛选热力图（`all`、`7`、`30`、`90`、`180`、`365` 天）。选择非 `all` 时段后，原始 feed 时间戳会先过滤至该范围内，再聚合到热力图网格中。
+
+- **文件**：`UserDialogActivityTab.vue`
+
+## Previous Instances 图表视图
+
+Previous Instances 对话框（`PreviousInstancesInfoDialog.vue`）新增**图表视图**切换，与现有表格视图并存。图表使用 ECharts 将会话访问数据可视化为时间线。
+
+- **切换**：`ToggleGroup` 在 `table` 和 `chart` 视图间切换
+- **数据**：`database.getPlayerDetailFromInstance()` 获取每位玩家的访问详情
+- **组件**：`PreviousInstancesInfoChart.vue`
+
 ## UserDialog 标签页搜索
 
 四个 UserDialog 标签页现在支持**客户端搜索**，通过文本输入过滤显示列表：

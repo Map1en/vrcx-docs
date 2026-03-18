@@ -162,6 +162,17 @@ Dashboards are dynamically rendered in NavMenu. `dashboardStore.getDashboardNavD
 
 Users can create multiple dashboards, each appearing in the navigation menu.
 
+## Panel Restrictions
+
+Certain panels are blocked from being added to dashboards. The `panelRegistry.js` maintains a `restrictedPanels` set — panels in this set do not appear in the PanelSelector during editing. This prevents navigation-only or tool panels (e.g., Settings, Search) from being placed in dashboards where they would not function correctly.
+
+## Default Hidden Columns
+
+DataTable columns can now declare `defaultHidden: true` in their column definition. These columns are hidden on first load but can be revealed via the column visibility toggle. The visibility state is persisted per-table via `configRepository`.
+
+- **Implementation**: Column definitions in `columns.jsx` files set `meta.defaultHidden`
+- **Persistence**: `useVrcxVueTable` reads/writes column visibility to `configRepository`
+
 ## Future Direction
 
 ### Planned Widgets

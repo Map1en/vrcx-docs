@@ -187,6 +187,14 @@ runSetCurrentUserLocationFlow(location, $location_at)
 - 玩家数量
 - 带位置摘要的好友列表
 
+## 年龄限制实例显示
+
+当 `appearanceSettingsStore.isAgeGatedInstancesVisible` 为 `false` 时，年龄限制实例在好友列表中被隐藏，替换为锁图标 + "Restricted" 文本。
+
+- **设置项**：`VRCX_isAgeGatedInstancesVisible`（默认：`false`）
+- **影响的视图**：`Location.vue`（好友侧边栏/卡片）、`WorldDialogInstancesTab.vue`（世界详情实例列表）、`GroupsSidebar.vue`（群组成员）
+- **行为**：`Location.vue` 通过设置 + `ageGate` 标志计算 `isAgeRestricted`。受限时，位置链接替换为不可点击的锁图标和 tooltip。
+
 ## 关键依赖
 
 | 模块 | 读取 | 写入 |

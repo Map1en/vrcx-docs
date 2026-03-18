@@ -329,6 +329,24 @@ The order of items 1 and 2 is controlled by `isSameInstanceAboveFavorites`. When
 |-----|------|---------|---------|
 | `VRCX_sameInstanceAboveFavorites` | Boolean | `false` | When true, same-instance friends appear above VIP favorites |
 
+## Recent Action Indicators
+
+A clock icon appears next to recently performed actions in the friend context menu (Sidebar right-click). Uses the same `useRecentActions.js` composable documented in [User System — Recent Action Indicators](/en/modules/user-system#recent-action-indicators).
+
+- **Scope**: Friend context menu items: Invite, Request Invite, Invite Message, etc.
+- **Files**: `FriendsSidebar.vue` context menu, `useRecentActions.js`
+
+## Accessible Status Indicators
+
+Two new appearance settings enhance status indicator accessibility:
+
+1. **Accessible Status Indicators** (`VRCX_accessibleStatus`, default: `false`): Applies distinct CSS mask shapes to status dots so color-blind users can distinguish statuses by shape, not just color.
+2. **Use Official Status Colors** (`VRCX_useOfficialStatusColors`, default: `true`): Reverts status dot colors to VRChat's original palette. When off, uses VRCX's custom color scheme.
+
+- **CSS**: `status-icon.css` defines mask shapes per status via `[data-accessible-status]` attribute
+- **Glow effects**: Status dots now have glow effects (box-shadow) in `FriendsLocationsCard` and sidebar items
+- **Files**: `status-icon.css`, `appearance.js`, `InterfaceTab.vue`
+
 ## Risks & Gotchas
 
 - **`sortedFriends` is a `shallowRef`**, not a `computed`. It is incrementally maintained via binary-insert (`reindexSortedFriend`) and splice-remove (`removeSortedFriend`). Full rebuilds only happen on sort method changes or login state transitions.

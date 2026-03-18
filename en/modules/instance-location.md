@@ -187,6 +187,14 @@ Location data is displayed on the VR wrist overlay:
 - Player count
 - Friend list with location summaries
 
+## Age-Gated Instance Display
+
+When `appearanceSettingsStore.isAgeGatedInstancesVisible` is `false`, age-restricted instances are hidden from friend lists and replaced with a lock icon + "Restricted" text.
+
+- **Setting**: `VRCX_isAgeGatedInstancesVisible` (default: `false`)
+- **Affected views**: `Location.vue` (friend sidebar/cards), `WorldDialogInstancesTab.vue` (world detail instances), `GroupsSidebar.vue` (group members)
+- **Behavior**: `Location.vue` computes `isAgeRestricted` from the setting + `ageGate` flag. When restricted, the location link is replaced with a non-clickable lock icon and tooltip.
+
 ## Key Dependencies
 
 | Module | Reads From | Writes To |

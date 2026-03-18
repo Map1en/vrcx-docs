@@ -329,6 +329,24 @@ runDeleteFriendshipFlow(id)
 |-----|------|--------|------|
 | `VRCX_sameInstanceAboveFavorites` | Boolean | `false` | 为 true 时，同实例好友显示在 VIP 收藏上方 |
 
+## 最近操作指示器
+
+好友右键菜单（Sidebar 右键点击）中最近执行的操作旁会显示时钟图标。使用与[用户系统 — 最近操作指示器](/zh/modules/user-system#最近操作指示器)相同的 `useRecentActions.js` composable。
+
+- **范围**：好友右键菜单项：邀请、请求邀请、邀请消息等
+- **文件**：`FriendsSidebar.vue` 右键菜单、`useRecentActions.js`
+
+## 无障碍状态指示器
+
+两个新的外观设置增强状态指示器的无障碍性：
+
+1. **无障碍状态指示器**（`VRCX_accessibleStatus`，默认：`false`）：为状态圆点应用不同的 CSS mask 形状，让色觉障碍用户可以通过形状而非仅靠颜色区分状态。
+2. **使用官方状态颜色**（`VRCX_useOfficialStatusColors`，默认：`true`）：将状态圆点颜色恢复为 VRChat 的原始配色。关闭时使用 VRCX 的自定义配色方案。
+
+- **CSS**：`status-icon.css` 通过 `[data-accessible-status]` 属性为每个状态定义 mask 形状
+- **发光效果**：状态圆点现在在 `FriendsLocationsCard` 和侧边栏项目中有发光效果（box-shadow）
+- **文件**：`status-icon.css`、`appearance.js`、`InterfaceTab.vue`
+
 ## 风险与注意事项
 
 - **`sortedFriends` 是 `shallowRef`**，而非 `computed`。通过二分插入（`reindexSortedFriend`）和 splice 删除（`removeSortedFriend`）增量维护。仅在排序方式变更或登录状态转换时全量重建。

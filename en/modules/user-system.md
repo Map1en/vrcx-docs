@@ -254,6 +254,20 @@ The **Activity** tab (`UserDialogActivityTab.vue`) displays an ECharts heatmap v
 
 No persistence — data is read-only from the feed database.
 
+### Period Filter
+
+A `<Select>` dropdown allows filtering the heatmap by time period (`all`, `7`, `30`, `90`, `180`, `365` days). Selecting a non-`all` period filters the raw feed timestamps to only include events within that range before aggregating into the heatmap grid.
+
+- **Files**: `UserDialogActivityTab.vue`
+
+## Previous Instances Chart View
+
+The Previous Instances dialog (`PreviousInstancesInfoDialog.vue`) adds a **chart view** toggle alongside the existing table view. The chart uses ECharts to visualize session visit data as a timeline.
+
+- **Toggle**: `ToggleGroup` switches between `table` and `chart` views
+- **Data**: `database.getPlayerDetailFromInstance()` fetches per-player visit detail
+- **Component**: `PreviousInstancesInfoChart.vue`
+
 ## UserDialog Tab Search
 
 Four UserDialog tabs now support **client-side search** via a text input that filters the displayed list:

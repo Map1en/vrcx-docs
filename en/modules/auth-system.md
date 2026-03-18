@@ -277,6 +277,30 @@ The Login page (`Login.vue`) displays an `<Alert>` banner above the login form w
 
 This informs users of server issues before they attempt login, reducing confusion from auth failures during outages. See [Status Bar — Server Status Severity](/en/modules/status-bar#server-status-severity) for the underlying `vrcStatusStore` fields.
 
+## System Language Detection
+
+On first launch (no saved `VRCX_appLanguage`), the Login page detects the OS language via `AppApi.CurrentLanguage()` and prompts the user to switch VRCX's locale if a matching translation exists.
+
+- **Resolution**: `resolveSystemLanguage(systemLanguage, languageCodes)` in `localization/index.js` — matches exact BCP-47 code, then falls back to base language, with special handling for Chinese variants (`zh-Hans` → `zh_CN`, `zh-Hant` → `zh_TW`)
+- **Prompt**: Modal confirm dialog rendered in the **detected language** (via `tForLocale()`) so the user can read it
+- **Guard**: Skipped if user manually changes language while prompt is open; `isActive` flag prevents action after component unmount
+- **Files**: `Login.vue`, `localization/index.js`
+
+## Onboarding Welcome Dialog
+
+A first-time user welcome dialog (`SpotlightDialog.vue`) highlights 4 key VRCX features: User Profiles, Right Click, Dashboard, Quick Search. Displayed once 800ms after mount on first launch.
+
+- **Persistence**: `VRCX_onboarding_welcome_seen` (boolean) in `configRepository`
+- **Design**: Glassmorphic dialog with staggered `featureAppear` animation per feature card
+- **Files**: `components/onboarding/SpotlightDialog.vue`
+
+## Pending Update Indicator
+
+When a VRCX update is available, a red dot badge appears on the updater button in the Login page.
+
+- **Data source**: `vrcxUpdaterStore.pendingVRCXUpdate` (reactive boolean)
+- **Files**: `Login.vue`
+
 ## Risks & Gotchas
 
 - **`watchState.isLoggedIn` is the master switch.** Setting it to `true` in `loginComplete()` triggers watchers across 15+ stores. Setting it to `false` in `runLogoutFlow()` triggers cleanup across all the same stores.

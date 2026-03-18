@@ -181,6 +181,17 @@ Dashboard 通过 NavMenu 动态渲染。`dashboardStore.getDashboardNavDefinitio
 | **NavMenu**          | 动态渲染 dashboard 导航条目                            |
 | **router.js**        | `dashboard` 路由，params = `{ id }`                    |
 
+## 面板限制
+
+部分面板被阻止添加到仪表盘。`panelRegistry.js` 维护一个 `restrictedPanels` 集合 — 该集合中的面板在编辑时不会出现在 PanelSelector 中。这防止仅用于导航或工具的面板（如设置、搜索）被放置在无法正常运作的仪表盘中。
+
+## 默认隐藏列
+
+DataTable 列现在可以在列定义中声明 `defaultHidden: true`。这些列在首次加载时隐藏，但可通过列可见性切换显示。可见性状态通过 `configRepository` 按表持久化。
+
+- **实现**：`columns.jsx` 文件中的列定义设置 `meta.defaultHidden`
+- **持久化**：`useVrcxVueTable` 读写列可见性到 `configRepository`
+
 ## 决策方向
 
 ### 下一步 Widget

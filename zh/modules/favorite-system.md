@@ -149,6 +149,21 @@ favoriteCoordinator.removeFavorite(type, id)
 - "切换到"按钮
 - 从收藏中移除
 
+## 收藏世界标签搜索
+
+收藏世界工具栏新增**搜索模式切换**（`name` / `tag`），可在按世界名称搜索和按世界标签搜索之间切换。`tag` 模式下搜索输入匹配 `world.tags[]` 而非 `world.name`。
+
+- **切换控件**：`FavoritesToolbar.vue` 中的 `ToggleGroup` — `searchMode` prop（`'name'` | `'tag'`）
+- **搜索范围**：跨远程和本地收藏世界搜索（通过 `searchableWorldEntries` 合并）
+- **文件**：`FavoritesToolbar.vue`、`FavoritesWorld.vue`
+
+## 收藏好友分组邀请
+
+邀请对话框（`InviteDialog.vue`）支持按特定收藏分组筛选在线好友进行邀请。对话框头部的下拉菜单列出所有收藏好友分组，选择后仅显示该分组中的在线好友。
+
+- **数据源**：`favoriteStore.favoriteGroups`（friend 类型）与 `friendStore.friends` 交叉引用
+- **文件**：`InviteDialog.vue`
+
 ## 文件清单
 
 | 文件 | 行数 | 职责 |

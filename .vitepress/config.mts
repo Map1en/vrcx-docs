@@ -115,6 +115,10 @@ export default withMermaid(
                                         text: 'Status Bar',
                                         link: '/en/modules/status-bar',
                                     },
+                                    {
+                                        text: 'Hot Worlds (Experimental)',
+                                        link: '/en/modules/hot-worlds',
+                                    },
                                 ],
                             },
                             {
@@ -272,6 +276,10 @@ export default withMermaid(
                                     {
                                         text: '状态栏',
                                         link: '/zh/modules/status-bar',
+                                    },
+                                    {
+                                        text: 'Hot Worlds（实验性）',
+                                        link: '/zh/modules/hot-worlds',
                                     },
                                 ],
                             },
