@@ -1,184 +1,130 @@
 # System Overview
 
-## Tech Stack
+## First Mental Model
 
-| Component | Version | Purpose |
-|-----------|---------|---------|
-| Vue | 3.5 | UI framework |
-| Pinia | 3.0 | State management |
-| Vue Router | 4.6 | Hash-based client routing |
-| Vite | 7.3 | Build tool & dev server |
-| Tailwind CSS | 4.2 | Utility-first styling |
-| Reka-ui | — | Headless component library |
-| TanStack Vue Query | — | Server-state caching |
-| vue-i18n | 11.3 | Internationalization (14 languages) |
-| Electron | 39.8 | Desktop wrapper (Linux/Mac) |
-| CEF | — | Desktop wrapper (Windows) |
+The VRCX frontend is not just a page bundle. It behaves more like a realtime desktop client hosted inside a desktop shell. The easiest way to understand the codebase is through five major paths:
 
-## 5-Layer Architecture
+1. Startup path: `src/app.js` -> `src/App.vue` -> global store creation -> auto-login and periodic refresh
+2. Page path: `route -> view -> store -> coordinator -> service`
+3. Realtime path: `services/websocket.js` receives events, coordinators route them, stores update
+4. Polling path: `src/stores/updateLoop.js` drives periodic refresh, log checks, and game-state sync every second
+5. Background path: SQLite, config persistence, worker computation, and desktop bridge work continue outside the visible UI
+
+Those paths explain the architecture better than volatile counts of pages or components.
+
+## Startup Order
+
+`src/app.js` assembles the application shell:
+
+1. `initPlugins()`
+2. `initPiniaPlugins()`
+3. create the Vue app
+4. register `pinia`, `i18n`, and `VueQueryPlugin`
+5. `initComponents(app)`
+6. `initRouter(app)`
+7. `initSentry(app)`
+8. `app.mount('#root')`
+
+`src/App.vue` then connects the runtime:
+
+- `createGlobalStores()` instantiates the global stores
+- a few bridge functions are attached to `window` for desktop-side callbacks
+- `onBeforeMount()` starts `updateLoop`
+- `onMounted()` triggers `getGameLogTable()`, user migration, auto-login, backup checks, and VRChat debug logging checks
+
+This is why a large amount of work is already running before a user opens any specific page.
+
+## Practical Layering
 
 ```mermaid
 graph TD
-    subgraph Layer5["Layer 5 — Views & Pages"]
-        Views["18 View Domains<br/>96 Vue files"]
-    end
-
-    subgraph Layer4["Layer 4 — Components"]
-        Components["360+ Components"]
-    end
-
-    subgraph Layer3["Layer 3 — State Management"]
-        Stores["35+ Pinia Stores"]
-        Queries["Vue Query Cache"]
-    end
-
-    subgraph Layer2["Layer 2 — Business Logic"]
-        Coordinators["24 Coordinators"]
-        Composables["8 Composables"]
-    end
-
-    subgraph Layer1["Layer 1 — Data Access"]
-        API["18 API Modules"]
-        Services["Services<br/>(request, websocket, sqlite, config)"]
-    end
-
-    subgraph Layer0["Layer 0 — Backend"]
-        CSharp["C# Backend<br/>(WebApi, AppApi, SQLite)"]
-        VRChatAPI["VRChat API"]
-    end
-
-    Views --> Components
-    Views --> Stores
-    Components --> Stores
-    Components --> Composables
-    Stores --> Coordinators
-    Coordinators --> Stores
-    Coordinators --> API
-    Queries --> API
-    API --> Services
-    Services --> CSharp
-    CSharp --> VRChatAPI
+    View[Views] --> Store[Pinia stores]
+    View --> Query[TanStack Query]
+    Store --> Coordinator[Coordinators]
+    Coordinator --> Service[Services / API]
+    Query --> Service
+    Service --> Bridge[WebApi / AppApi / SQLite / Config / WebSocket]
+    Store --> Worker[Workers]
+    Coordinator --> Worker
 ```
 
-## Layer-by-Layer Breakdown
+### Startup and assembly layer
 
-### Layer 5 — Views (18 domains)
+`src/app.js`, `src/App.vue`, `src/plugins/`, and `src/stores/index.js` assemble Vue, Pinia, i18n, Query, routing, global stores, and a small number of desktop bridge hooks.
 
-| Domain | Path | Purpose |
-|--------|------|---------|
-| Login | `views/Login/` | Authentication UI |
-| Feed | `views/Feed/` | Social activity timeline |
-| FriendsLocations | `views/FriendsLocations/` | Real-time friend location cards |
-| Sidebar | `views/Sidebar/` | Right panel — friends & groups |
-| FriendList | `views/FriendList/` | Friend data table |
-| FriendLog | `views/FriendLog/` | Friend add/remove history |
-| PlayerList | `views/PlayerList/` | In-world player tracking |
-| Search | `views/Search/` | Player/world search |
-| Favorites | `views/Favorites/` | Friends / Worlds / Avatars (3 sub-views) |
-| MyAvatars | `views/MyAvatars/` | Avatar management |
-| Notifications | `views/Notifications/` | Invites & friend requests |
-| Moderation | `views/Moderation/` | Block/kick tools |
-| GameLog | `views/GameLog/` | Complete game event log |
-| Charts | `views/Charts/` | Instance activity & mutual friends |
-| Tools | `views/Tools/` | Gallery, screenshot metadata, exports |
-| Settings | `views/Settings/` | 7 tabs + 8 dialogs |
-| Dashboard | `views/Dashboard/` | Customizable dashboard (multi-row widget layout) |
-| Layout | `views/Layout/` | Main 3-panel layout container |
+### Data access and cache layer
 
-### Layer 4 — Components
+- `src/services/request.js` is the raw request entry point and owns GET deduplication, failure backoff, and status handling
+- `src/api/` and `src/queries/` provide entity fetching with cache policy
+- `src/services/database/*` is the local persistence layer for feed, activity, game log, favorites, and related history
 
-| Category | Count | Examples |
-|----------|-------|---------|
-| UI Library (`components/ui/`) | ~200 files, 50+ types | Button, Dialog, DataTable, Tabs, Select, Popover, Sheet... |
-| Feature Dialogs (`components/dialogs/`) | 20+ | UserDialog (11 tabs), WorldDialog (4 tabs), GroupDialog (12+ tabs) |
-| Root Components | 17 | NavMenu, StatusBar, QuickSearchDialog, Location, Timer... |
+### State and orchestration layer
 
-### Layer 3 — Pinia Stores (35+)
+- `src/stores/` owns domain state, view state, and part of the derived-list work
+- `src/coordinators/` owns cross-store flows and side effects so stores do not orchestrate each other directly
 
-| Category | Stores |
-|----------|--------|
-| **Core Entity** | user, friend, avatar, avatarProvider, world, instance, group, location |
-| **Features** | feed, favorite, search, gallery, invite, moderation |
-| **Real-time** | notification (complex), vrcStatus |
-| **Game** | game, gameLog (dir), launch |
-| **UI State** | ui, modal, quickSearch, sharedFeed, charts, dashboard, tools |
-| **Settings** | settings/general, appearance, advanced, notifications, discordPresence, wristOverlay |
-| **System** | auth, updateLoop, vrcx, vrcxUpdater |
-| **Networking** | photon |
-| **VR** | vr |
+### Realtime and background task layer
 
-### Layer 2 — Coordinators (24)
+- `src/services/websocket.js` handles VRChat realtime events
+- `src/stores/updateLoop.js` handles periodic refresh, log checks, and game-state sync
+- `src/workers/*` handles CPU-heavy tasks such as search and activity analysis
 
-| Category | Coordinators |
-|----------|-------------|
-| **Auth** | authCoordinator, authAutoLoginCoordinator |
-| **User** | userCoordinator, userEventCoordinator, userSessionCoordinator |
-| **Friend** | friendSyncCoordinator, friendPresenceCoordinator, friendRelationshipCoordinator |
-| **Entity** | avatarCoordinator, worldCoordinator, groupCoordinator, instanceCoordinator |
-| **Feature** | favoriteCoordinator, inviteCoordinator, moderationCoordinator, memoCoordinator |
-| **Game** | gameCoordinator, gameLogCoordinator, locationCoordinator |
-| **System** | cacheCoordinator, imageUploadCoordinator, dateCoordinator, vrcxCoordinator, searchIndexCoordinator |
+### Presentation and interaction layer
 
-### Layer 1 — API & Services
+- `src/views/` contains page-level containers
+- `src/components/` contains reusable UI and large dialogs
+- high-volume areas default toward virtualization, while heavy computation should move toward workers or local cache
 
-**API modules** (18): auth, user, friend, avatar, world, instance, group, favorite, notification, playerModeration, avatarModeration, image, inventory, inviteMessages, prop, misc, vrcPlusIcon, vrcPlusImage
+## Three Runtime Paths That Matter Most
 
-**Services**: request.js (HTTP + dedup), websocket.js (real-time events), sqlite.js (DB wrapper), config.js (key-value config), webapi.js (C# bridge), appConfig.js (debug flags), watchState.js (reactive flags), security.js, jsonStorage.js, confusables.js (confusable character detection), gameLog.js (game log parsing)
+### 1. Page read path
 
-**Web Workers**: quickSearchWorker.js (quick search — confusable-character normalization + locale-aware search offloaded to worker thread)
+Typical path:
 
-## Main Layout Structure
+`router -> view -> store/computed -> service/api -> state update -> render`
 
-```mermaid
-graph LR
-    subgraph MainLayout
-        Nav["NavMenu"]
-        Main["Main Content"]
-        Side["Sidebar"]
-    end
+In pages like `FriendList`, `FriendsLocations`, and `MyAvatars`, the real complexity is usually in derivation, filtering, batch queries, and persistence rather than in the component tree itself.
 
-    Nav --- Main --- Side
+### 2. Realtime update path
 
-    subgraph BelowLayout["Below Layout"]
-        StatusBar["StatusBar"]
-    end
+Typical path:
 
-    subgraph Portals["Dialog Portals"]
-        Dialogs["14 global dialogs"]
-    end
-```
+`websocket event -> handlePipeline -> coordinator -> store mutation -> derived lists recompute -> visible view update`
 
-- **NavMenu**: Collapsible left sidebar, icon-only when collapsed, dropdown submenus, keyboard shortcuts, notification dots
-- **Main Content**: `RouterView` wrapped in `KeepAlive` (excludes Charts), `ResizablePanel` with auto-save
-- **Sidebar**: Friends/Groups tabs, 7 sort options, favorite group filtering, same-instance grouping
-- **Layout persistence**: Panel sizes saved to localStorage as `"vrcx-main-layout-right-sidebar"`
+Friend presence, notifications, and location tracking all rely on this path, so the main performance question is often how much derived data gets rebuilt per incoming event.
 
-## App Initialization Order
+### 3. Polling and background computation path
 
-```
-app.js
-├── 1. initPlugins()          — Custom plugin setup
-├── 2. initPiniaPlugins()     — Sentry Pinia plugin (nightly)
-├── 3. VueQueryPlugin         — TanStack Vue Query
-├── 4. Pinia                  — State management
-├── 5. i18n                   — Internationalization
-├── 6. initComponents()       — Global UI component registration
-├── 7. initRouter()           — Vue Router + auth guards
-├── 8. initSentry()           — Error tracking
-└── 9. app.mount('#root')
+Typical path:
 
-App.vue onMounted:
-├── updateLoop.init()         — Start all periodic timers
-├── migrateUsers()            — DB migration
-├── autoLogin()               — Attempt auto-login
-├── checkBackup()             — Backup verification
-└── VRChat debug logging      — Conditional
-```
+`updateLoop / UI action -> SQLite or worker -> cached result -> store/view consume`
 
-## VR Mode
+Activity analytics, gallery work, game-log-heavy features, and game-state sync live here. The bottleneck is usually query shape, cache granularity, or main-thread blocking, not DOM size.
 
-VR has a **separate entry point** (`vr.js` → `Vr.vue`):
-- Only loads `i18n` plugin (no Pinia, no Vue Query, no Sentry)
-- Minimal UI: wrist overlay showing friend locations
-- Communicates with main app via shared backend, not shared Vue state
-- Separate build output (`vr.html`)
+## Why Store Boundaries Matter
+
+The main engineering rule in this repo is not “tiny beautiful components”. It is “do not push cross-module orchestration back into stores”.
+
+The reasons are practical:
+
+- when one store owns state, derivations, and cross-module flows at the same time, performance issues become much harder to localize
+- WebSocket-driven updates and user-driven interactions share the same state graph, so blurred boundaries amplify chain recomputation
+- keeping multi-store side effects in coordinators makes docs, debugging, and refactoring much more manageable
+
+## Performance-Friendly Patterns Already Present
+
+These patterns are worth calling out because they show the current optimization direction:
+
+- `src/services/request.js` merges repeated GET requests within a short window to avoid duplicate concurrent fetches
+- `src/stores/friend.js` maintains `sortedFriends` and uses `reindexSortedFriend()` plus batching for incremental resorting instead of fully resorting every derived list
+- `src/stores/quickSearch.js` routes quick search through a worker and pushes index updates incrementally via `searchIndexStore.version`
+- `src/stores/activity.js` caches snapshots, deduplicates in-flight jobs, and moves activity computation to a worker
+- several large-list pages already use virtualization, though the real cost can still sit upstream in data preparation
+
+## Recommended Reading Order
+
+- start with [Frontend Change Entry Map](/en/architecture/change-entry-map) to identify the right entry files
+- then check whether the relevant store and coordinator already form the full path
+- only then drill down into `services/database/*`, `services/request.js`, workers, `services/websocket.js`, or `updateLoop`
+
+Build the path first, then inspect local details.

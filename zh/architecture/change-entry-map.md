@@ -1,72 +1,111 @@
-# 前端改动入口地图（排除 Photon）
+# 前端改动入口地图
 
-这页是“改功能时的最短定位路径”。  
-范围只包含主前端（不含 `photon` 相关页面、store、设置）。
+这页的目标不是穷举所有文件，而是给出“改功能时先去哪看”的最短路径。
 
-## 入口总则
+## 总规则
 
-先从路由找入口，再顺着链路走：
+大多数前端功能都可以按这条顺序定位：
 
-`route -> view -> store -> coordinator -> api/service`
+`route -> view -> store -> coordinator -> service/database`
 
-路由定义文件：`src/plugins/router.js`
+对应的几个固定入口：
 
-## 高频功能入口
+- 路由：`src/plugins/router.js`
+- 根布局：`src/views/Layout/MainLayout.vue`
+- 全局初始化：`src/app.js`、`src/App.vue`
+- 跨模块流程：`src/coordinators/`
+- 外部能力边界：`src/services/`、`src/api/`
 
-| 功能 | 路由名 | 入口 View | 主要 Store | 常用 Coordinator |
-|------|--------|-----------|------------|------------------|
-| 动态 Feed | `feed` | `views/Feed/Feed.vue` | `feed`, `sharedFeed`, `appearance` | `userEventCoordinator` |
-| 好友位置卡片 | `friends-locations` | `views/FriendsLocations/FriendsLocations.vue` | `friend`, `favorite`, `location`, `appearance` | `friendPresenceCoordinator`, `locationCoordinator` |
-| 好友表格 | `friend-list` | `views/FriendList/FriendList.vue` | `friend`, `search`, `appearance`, `modal` | `friendRelationshipCoordinator`, `userCoordinator` |
-| 好友历史 | `friend-log` | `views/FriendLog/FriendLog.vue` | `friend`, `user` | `friendRelationshipCoordinator` |
-| 通知 | `notification` | `views/Notifications/Notification.vue` | `notification`, `invite`, `gallery`, `appearance` | `groupCoordinator`, `userCoordinator`, `worldCoordinator` |
-| 收藏（好友/世界/模型） | `favorite-friends` / `favorite-worlds` / `favorite-avatars` | `views/Favorites/*` | `favorite`, `user`, `modal`, `appearance` | `favoriteCoordinator` |
-| 搜索 | `search` | `views/Search/Search.vue` | `search`, `auth`, `avatarProvider`, `appearance` | `userCoordinator`, `worldCoordinator`, `groupCoordinator`, `avatarCoordinator` |
-| 设置 | `settings` | `views/Settings/Settings.vue` | `settings/*`, `vrcxUpdater`, `vr` | 以 store action 为主 |
-| 工具 | `tools` | `views/Tools/Tools.vue` | `gallery`, `vrcx`, `launch`, `friend` | `imageUploadCoordinator` |
-| 游戏日志 | `game-log` | `views/GameLog/GameLog.vue` | `gameLog`, `appearance`, `modal`, `vrcx` | `gameLogCoordinator` |
-| 管理 | `moderation` | `views/Moderation/Moderation.vue` | `moderation`, `appearance`, `modal` | `moderationCoordinator` |
-| 我的模型 | `my-avatars` | `views/MyAvatars/MyAvatars.vue` | `avatar`, `user`, `modal`, `appearance` | `avatarCoordinator`, `imageUploadCoordinator` |
-| 自定义仪表盘 | `dashboard` | `views/Dashboard/Dashboard.vue` | `dashboard` | — |
+## 先分清功能属于哪一类
 
-## 三条常用定位路径
+### 页面型功能
 
-### 1) 改 Sidebar 好友显示
+特征是有明确路由入口，比如：
 
-1. 路由入口：`MainLayout -> views/Sidebar/Sidebar.vue`
-2. 具体渲染：`views/Sidebar/components/FriendsSidebar.vue`、`FriendItem.vue`
-3. 数据来源：`stores/friend.js`（列表、排序、分组）
-4. 状态变更来源：`coordinators/friendPresenceCoordinator.js`、`friendRelationshipCoordinator.js`
-5. 事件输入：`services/websocket.js`（`friend-*` 事件）
+- `Feed`
+- `FriendsLocations`
+- `FriendList`
+- `Search`
+- `MyAvatars`
+- `GameLog`
+- `Tools`
+- `Settings`
 
-### 2) 改 FriendsLocations 卡片行为
+这类功能通常先看 route 对应 view，再看它直接使用的 store 和 composable。
 
-1. 路由：`friends-locations`
-2. 视图：`views/FriendsLocations/FriendsLocations.vue`
-3. 卡片：`views/FriendsLocations/components/FriendsLocationsCard.vue`
-4. 数据：`stores/friend.js` + `stores/location.js` + `stores/favorite.js`
-5. 来源：`friendPresenceCoordinator` / `locationCoordinator` + WebSocket
+### 实时型功能
 
-### 3) 改通知展示/动作
+特征是页面只是展示端，状态主要来自 WebSocket 和 coordinator，比如：
 
-1. 路由：`notification` 或 Sidebar 通知面板
-2. 视图：`views/Notifications/Notification.vue`、`views/Sidebar/components/NotificationItem.vue`
-3. 核心状态：`stores/notification/index.js`
-4. 事件入口：`services/websocket.js`（`notification*`、`instance-closed`）
-5. 关联动作：`groupCoordinator` / `userCoordinator` / `worldCoordinator`
+- 好友在线状态
+- 通知
+- 实例/位置变化
+- 群组在线信息
 
-## 新功能改动清单（速用版）
+这类功能不能只看 view。要从 `src/services/websocket.js` 和相关 coordinator 一起看。
 
-1. 在 `router.js` 确认功能挂载点（新路由还是复用现有页）。
-2. 确认 owner store（谁拥有状态，谁提供 action）。
-3. 只在 coordinator 编排跨 store 副作用。
-4. 如果数据来自实时事件，补 `websocket.js` 入口与映射说明。
-5. 补 i18n key（`src/localization/*.json`）。
-6. 增加或更新 `vitest` 对应模块测试。
+### 后台计算型功能
 
-## 反向检索（你常用的）
+特征是页面只是发起动作，真正耗时发生在 SQLite、Query cache 或 Worker，比如：
 
-- 想找“这个路由在哪定义”：`rg "name: 'xxx'" src/plugins/router.js`
-- 想找“某 view 用了哪些 store”：`rg "use[A-Za-z]+Store\\(" src/views/YourView`
-- 想找“某 store 被谁用了”：`rg "useYourStore" src/views src/coordinators src/stores`
+- 活跃度图表
+- 游戏日志统计
+- 截图库/元数据处理
+- 快速搜索
 
+这类功能优先看 `src/services/database/*`、`src/queries/*`、`src/stores/activity.js`、`src/stores/quickSearch.js`、`src/workers/*`。
+
+## 高频入口地图
+
+| 功能 | 先看 View | 再看 Store | 再看 Coordinator / Service |
+|------|-----------|------------|-----------------------------|
+| Feed | `src/views/Feed/Feed.vue` | `src/stores/feed.js`、`src/stores/sharedFeed.js` | `src/coordinators/userEventCoordinator.js`、`src/services/database/feed.js` |
+| 好友位置卡片 | `src/views/FriendsLocations/FriendsLocations.vue` | `src/stores/friend.js`、`src/stores/location.js`、`src/stores/favorite.js` | `src/coordinators/friendPresenceCoordinator.js`、`src/coordinators/locationCoordinator.js` |
+| 好友表格 | `src/views/FriendList/FriendList.vue` | `src/stores/friend.js`、`src/stores/search.js` | `src/coordinators/friendRelationshipCoordinator.js`、`src/services/database/gameLog.js` |
+| 侧栏好友 | `src/views/Sidebar/components/FriendsSidebar.vue` | `src/stores/friend.js`、`src/stores/favorite.js` | `src/coordinators/friendPresenceCoordinator.js`、`src/services/websocket.js` |
+| 通知 | `src/views/Notifications/Notification.vue` | `src/stores/notification/index.js`、`src/stores/invite.js` | `src/coordinators/groupCoordinator.js`、`src/coordinators/worldCoordinator.js` |
+| 我的模型 | `src/views/MyAvatars/MyAvatars.vue` | `src/stores/avatar.js`、`src/stores/user.js` | `src/services/database/avatarFavorites.js`、`src/coordinators/avatarCoordinator.js` |
+| 搜索 / 快速搜索 | `src/views/Search/Search.vue` | `src/stores/search.js`、`src/stores/quickSearch.js`、`src/stores/searchIndex.js` | `src/workers/*`、相关 entity coordinator |
+| 游戏日志 | `src/views/GameLog/GameLog.vue` | `src/stores/gameLog/` | `src/coordinators/gameLogCoordinator.js`、`src/services/database/gameLog.js` |
+| 工具 / 图库 | `src/views/Tools/Tools.vue` | `src/stores/gallery.js`、`src/stores/tools.js` | `src/coordinators/imageUploadCoordinator.js`、图库相关数据库服务 |
+| 设置 | `src/views/Settings/Settings.vue` | `src/stores/settings/*` | `src/services/config.js` |
+
+## 三条最常用的定位路径
+
+### 1. 改好友展示
+
+如果你改的是“好友怎么显示”，通常不要只盯某一个组件：
+
+1. 看 `FriendList` 或 `FriendsSidebar` / `FriendsLocations` 哪个视图在展示
+2. 看 `src/stores/friend.js` 的排序、筛选、派生列表
+3. 看 `src/coordinators/friendPresenceCoordinator.js` 和 `src/coordinators/friendRelationshipCoordinator.js`
+4. 如果数据来自实时事件，再补看 `src/services/websocket.js`
+
+### 2. 改搜索体验
+
+1. 普通搜索先看 `src/views/Search/Search.vue` 和 `src/stores/search.js`
+2. 快速搜索看 `src/stores/quickSearch.js`、`src/stores/searchIndex.js`、`src/stores/quickSearchWorker.js`
+3. 如果搜索命中依赖本地历史或日志，再看 `src/services/database/*`
+
+### 3. 改统计或图表
+
+1. 看页面或对话框入口
+2. 看对应 store 是否已有缓存与快照逻辑
+3. 再看 `src/services/database/*` 或 `src/queries/*` 的查询形态
+4. 最后确认是否已经走 Worker，还是仍在主线程聚合
+
+## 改动前的判断清单
+
+- 这个功能的 owner store 是谁
+- 这是页面驱动、实时驱动，还是后台计算驱动
+- 跨 store 副作用是否应该放进 coordinator
+- 是否已经存在可复用的数据库查询、Query cache 或 Worker 管线
+- 这次改动会不会把重查询、全量过滤或同步持久化带回高频交互路径
+
+## 搜索代码时最实用的命令
+
+- 找路由：`rg "name: 'xxx'" src/plugins/router.js`
+- 找某个页面用了哪些 store：`rg "use[A-Za-z]+Store\(" src/views/YourView`
+- 找某个 store 被谁消费：`rg "useYourStore" src/views src/coordinators src/stores`
+- 找 WebSocket 事件入口：`rg "websocket|notification|friend-" src/services src/coordinators`
+- 找数据库查询：`rg "database\.|SELECT |FROM " src/views src/stores src/services`

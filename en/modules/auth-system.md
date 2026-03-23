@@ -109,20 +109,28 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant App as autoLoginAfterMounted
+    participant Vrcx as vrcxStore
     participant Config as configRepository
     participant API as authRequest
     participant User as getCurrentUser
 
-    App->>Config: getString('lastUserLoggedIn')
-    alt Has saved user & no primary password
-        App->>Config: getSavedCredentials(userId)
-        App->>App: applyAutoLoginDelay() [countdown toast]
-        App->>API: authRequest.getConfig()
-        App->>User: getCurrentUser()
-    else Primary password enabled
-        Note right of App: Skip auto-login,<br/>show login screen
+    App->>Vrcx: waitForDatabaseInit()
+    alt Database init failed
+        Note right of App: Skip auto-login,<br/>database not ready
+    else Database init succeeded
+        App->>Config: getString('lastUserLoggedIn')
+        alt Has saved user & no primary password
+            App->>Config: getSavedCredentials(userId)
+            App->>App: applyAutoLoginDelay() [countdown toast]
+            App->>API: authRequest.getConfig()
+            App->>User: getCurrentUser()
+        else Primary password enabled
+            Note right of App: Skip auto-login,<br/>show login screen
+        end
     end
 ```
+
+> **Database Init Gate**: Both `autoLoginAfterMounted()` and `handleAutoLogin()` (WebSocket reconnect) now call `vrcxStore.waitForDatabaseInit()` before proceeding. This ensures the database upgrade has completed and tables are ready before any login flow attempts to access them. If the database init fails, auto-login is skipped entirely.
 
 ### Auto-Login on Disconnect (WebSocket close)
 
@@ -294,6 +302,68 @@ A first-time user welcome dialog (`SpotlightDialog.vue`) highlights 4 key VRCX f
 - **Design**: Glassmorphic dialog with staggered `featureAppear` animation per feature card
 - **Files**: `components/onboarding/SpotlightDialog.vue`
 
+## What's New Dialog
+
+When the user upgrades to a new VRCX version that has registered "What's New" content, a dialog is shown highlighting the key features of that release.
+
+### Trigger Logic
+
+```mermaid
+sequenceDiagram
+    participant Store as vrcxUpdaterStore
+    participant Config as configRepository
+    participant Releases as whatsNewReleases.js
+    participant Dialog as WhatsNewDialog.vue
+
+    Store->>Store: shouldAnnounceCurrentVersion()
+    Note over Store: branch='Stable' &&<br/>isRecognizedStableReleaseVersion() &&<br/>lastVersion !== currentVersion
+
+    Store->>Releases: getWhatsNewRelease(currentVersion)
+    alt Has What's New content
+        Store->>Dialog: whatsNewDialog.visible = true
+    else No content for this version
+        Store->>Store: openChangeLogDialogOnly()
+    end
+    Store->>Config: setString('VRCX_lastVRCXVersion', currentVersion)
+```
+
+### Version Keying
+
+Release content is stored in `shared/constants/whatsNewReleases.js` as a static frozen object:
+
+```js
+const whatsNewReleases = Object.freeze({
+    '2026.04.05': {
+        items: [
+            { key: 'quick_search', icon: 'search' },
+            { key: 'dashboard', icon: 'layout-dashboard' },
+            // ...
+        ]
+    }
+});
+```
+
+- **Version normalization**: `normalizeReleaseVersion()` strips `VRCX ` prefix and validates `YYYY.MM.DD` format
+- **i18n keys**: `onboarding.whatsnew.releases.{YYYY_MM_DD}.items.{key}.title/description`
+- **Historical**: Past release content is preserved for future reference
+
+### Components
+
+| Component | Purpose |
+|-----------|--------|
+| `WhatsNewDialog.vue` | Dialog UI with feature cards |
+| `whatsNewReleases.js` | Version → feature item mapping |
+| `vrcxUpdaterStore` | `showWhatsNewDialog()`, `closeWhatsNewDialog()`, `openChangeLogDialogOnly()` |
+
+## Database Upgrade Dialog
+
+`DatabaseUpgradeDialog.vue` displays a blocking progress dialog during database version upgrades.
+
+- **Trigger**: `vrcxStore.databaseUpgradeState.visible` is set when `databaseVersion < targetVersion`
+- **Gate**: `vrcxStore.waitForDatabaseInit()` returns a Promise that resolves after `updateDatabaseVersion()` completes. Auto-login flows await this before proceeding.
+- **On failure**: A non-dismissible `modalStore.alert()` informs the user the upgrade failed, and DevTools are opened automatically for debugging.
+- **Files**: `components/dialogs/DatabaseUpgradeDialog.vue`, `stores/vrcx.js`
+
 ## Pending Update Indicator
 
 When a VRCX update is available, a red dot badge appears on the updater button in the Login page.
@@ -307,3 +377,4 @@ When a VRCX update is available, a red dot badge appears on the updater button i
 - **Auto-login delay** (`applyAutoLoginDelay`) uses a countdown toast with `workerTimers.setTimeout` — this is a user-configurable delay (0-60s) to prevent rapid reconnection loops.
 - **Cookie persistence:** `user.cookies` is saved alongside credentials. On `relogin()`, cookies are restored before auth to maintain session — if cookies are invalid, a fresh auth request is made.
 - **Primary password is client-side encryption only** — it does not provide server-side security, only prevents local credential exposure.
+- **Database init gate blocks auto-login.** If `updateDatabaseVersion()` fails (e.g., disk full, schema conflict), auto-login is skipped entirely to prevent corrupt state.

@@ -11,7 +11,7 @@ graph LR
         WS["WebSocket"]
         Steam["SteamVR"]
         Spark["消息频率图"]
-        Clocks["时钟 ×3"]
+        Clocks["时钟 ×2"]
         Zoom["缩放"]
         Uptime["运行时间"]
     end
@@ -132,7 +132,7 @@ sequenceDiagram
 
 配置存储在 `configRepository`：
 - `VRCX_statusBarClocks` — 3 个时钟配置的 JSON 数组
-- `VRCX_statusBarClockCount` — 可见时钟数量（0–3）
+- `VRCX_statusBarClockCount` — 可见时钟数量（0–3，默认：2）
 
 ## 平台兼容性
 

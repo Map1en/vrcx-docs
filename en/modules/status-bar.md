@@ -11,7 +11,7 @@ graph LR
         WS["WebSocket"]
         Steam["SteamVR"]
         Spark["Sparkline"]
-        Clocks["Clocks ×3"]
+        Clocks["Clocks ×2"]
         Zoom["Zoom"]
         Uptime["Uptime"]
     end
@@ -132,7 +132,7 @@ Up to 3 configurable timezone clocks, each with:
 
 Configuration stored in `configRepository` as:
 - `VRCX_statusBarClocks` — JSON array of 3 clock configs
-- `VRCX_statusBarClockCount` — Number of visible clocks (0–3)
+- `VRCX_statusBarClockCount` — Number of visible clocks (0–3, default: 2)
 
 ## Platform Compatibility
 

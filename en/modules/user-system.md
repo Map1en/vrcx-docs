@@ -231,34 +231,41 @@ sequenceDiagram
 
 ## Activity Heatmap
 
-The **Activity** tab (`UserDialogActivityTab.vue`) displays an ECharts heatmap visualizing a user's online frequency by day-of-week × hour-of-day.
+> **Full documentation**: See [Activity System](./activity-system.md) for the complete architecture, data flow, and database schema.
+
+The **Activity** tab (`UserDialogActivityTab.vue`) displays an ECharts heatmap visualizing a user's online frequency by day-of-week × hour-of-day. It is powered by the three-layer Activity System: `activityStore` → `activityEngine` → `activityWorker`.
 
 ### Data Source
 
-- Queries `database.getOnlineOfflineCountByHour(userId)` which aggregates feed entries of type `Online` from SQLite
-- Returns `{ dayOfWeek, hour, count }` tuples grouped by day (0=Sun..6=Sat) and hour (0..23)
-- Reordered to Mon–Sun for display (row 0=Mon at top)
+- **Self (current user)**: Queries `gamelog_location` for per-instance join/leave timestamps → `buildSessionsFromGamelog()`
+- **Friend**: Queries `feed_online_offline` for online/offline transition events → `buildSessionsFromEvents()`
+- Sessions are cached in-memory (LRU, max 12 users) and persisted to `activity_sessions_v2` / `activity_sync_state_v2` tables
+- Heatmap buckets and normalization are computed in a dedicated Web Worker and cached in `activity_bucket_cache_v2`
 
 ### Features
 
 | Feature | Details |
 |---------|---------|
-| **Heatmap** | 7×24 grid, color intensity maps to event count |
-| **Peak Stats** | Shows most active day and most active time slot above the chart |
+| **Activity Heatmap** | 7×24 grid showing online frequency by day × hour |
+| **Overlap Charts** | Compare online times between current user and any friend |
+| **Top Worlds** | Ranked list of most-visited worlds (by time or visit count), with option to exclude home world |
+| **Peak Stats** | Most active day and most active time slot above the chart |
+| **Period Filter** | 7, 30, 90, 180 days selectable via dropdown |
+| **Exclude Hours** | Filter out sleeping/inactive hours from overlap analysis |
 | **Dark Mode** | Adapts color scheme via `isDarkMode` watch |
 | **Refresh** | Manual reload button; auto-loads when the tab becomes active |
 | **Context Menu** | Right-click to save chart as PNG |
-| **Empty State** | Shows `DataTableEmpty` when no online events found |
+| **Empty State** | Shows `DataTableEmpty` when no data found |
 
-### Persistence Key
+### Three Refresh Strategies
 
-No persistence — data is read-only from the feed database.
+| Strategy | When | What It Does |
+|----------|------|-------------|
+| **Full Refresh** | First load or force refresh | Fetches all source data, builds sessions from scratch |
+| **Incremental** | Subsequent loads | Fetches only events after cursor, merges new sessions |
+| **Range Expansion** | User selects longer period | Fetches older events, prepends sessions |
 
-### Period Filter
-
-A `<Select>` dropdown allows filtering the heatmap by time period (`all`, `7`, `30`, `90`, `180`, `365` days). Selecting a non-`all` period filters the raw feed timestamps to only include events within that range before aggregating into the heatmap grid.
-
-- **Files**: `UserDialogActivityTab.vue`
+- **Files**: `UserDialogActivityTab.vue`, `stores/activity.js`, `shared/utils/activityEngine.js`, `workers/activityWorker.js`
 
 ## Previous Instances Chart View
 

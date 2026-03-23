@@ -231,34 +231,41 @@ sequenceDiagram
 
 ## 活跃度热力图
 
-**Activity** 标签页 (`UserDialogActivityTab.vue`) 使用 ECharts 热力图展示用户按 星期×小时 的在线频率。
+> **完整文档**：有关完整架构、数据流和数据库 schema，请查看 [Activity 系统](./activity-system.md)。
+
+**Activity** 标签页 (`UserDialogActivityTab.vue`) 使用 ECharts 热力图展示用户按 星期×小时 的在线频率。它基于三层 Activity 系统：`activityStore` → `activityEngine` → `activityWorker`。
 
 ### 数据源
 
-- 查询 `database.getOnlineOfflineCountByHour(userId)`，聚合 SQLite 中 `Online` 类型的 feed 条目
-- 返回 `{ dayOfWeek, hour, count }` 元组，按天（0=周日..6=周六）和小时（0..23）分组
-- 显示时重排为周一至周日（行 0=周一 在顶部）
+- **自己（当前用户）**：查询 `gamelog_location` 获取每个实例的加入/离开时间戳 → `buildSessionsFromGamelog()`
+- **好友**：查询 `feed_online_offline` 获取在线/离线转换事件 → `buildSessionsFromEvents()`
+- Session 在内存中缓存（LRU，最多 12 个用户），并持久化到 `activity_sessions_v2` / `activity_sync_state_v2` 表
+- 热力图分桶和归一化在专用 Web Worker 中计算，并缓存到 `activity_bucket_cache_v2`
 
 ### 功能
 
 | 功能 | 详情 |
 |------|------|
-| **热力图** | 7×24 网格，颜色强度映射到事件数量 |
-| **峰值统计** | 在图表上方显示最活跃的日期和时间段 |
+| **Activity 热力图** | 7×24 网格显示按天×小时的在线频率 |
+| **重叠图表** | 比较当前用户和任意好友的在线时间 |
+| **Top Worlds** | 最常访问世界的排名列表（按时间或访问次数），可排除 home 世界 |
+| **峰值统计** | 图表上方显示最活跃的日期和时间段 |
+| **时间段筛选** | 可通过下拉菜单选择 7、30、90、180 天 |
+| **排除时段** | 从重叠分析中过滤睡眠/非活跃时间 |
 | **深色模式** | 通过 `isDarkMode` watch 适配配色方案 |
 | **刷新** | 手动刷新按钮；标签页激活时自动加载 |
 | **右键菜单** | 右键保存图表为 PNG |
-| **空状态** | 无在线事件时显示 `DataTableEmpty` |
+| **空状态** | 无数据时显示 `DataTableEmpty` |
 
-### 持久化
+### 三种刷新策略
 
-无持久化 — 数据从 feed 数据库只读获取。
+| 策略 | 触发时机 | 行为 |
+|------|---------|------|
+| **全量刷新** | 首次加载或强制刷新 | 获取所有源数据，从头构建 sessions |
+| **增量刷新** | 后续加载 | 仅获取游标之后的事件，合并新 sessions |
+| **范围扩展** | 用户选择更长时间段 | 获取更早的事件，前置 sessions |
 
-### 时间段筛选器
-
-`<Select>` 下拉菜单允许按时间段筛选热力图（`all`、`7`、`30`、`90`、`180`、`365` 天）。选择非 `all` 时段后，原始 feed 时间戳会先过滤至该范围内，再聚合到热力图网格中。
-
-- **文件**：`UserDialogActivityTab.vue`
+- **文件**：`UserDialogActivityTab.vue`、`stores/activity.js`、`shared/utils/activityEngine.js`、`workers/activityWorker.js`
 
 ## Previous Instances 图表视图
 
